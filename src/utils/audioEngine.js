@@ -21,7 +21,10 @@ export const playNotes = async (notes) => {
 export const playSong = async (song, onChordPlay) => {
   await initAudio();
 
+  // 🔥 RESET TOTAL
+  Tone.Transport.stop();
   Tone.Transport.cancel();
+  Tone.Transport.position = 0;
 
   song.forEach((item) => {
     Tone.Transport.schedule((time) => {
@@ -41,4 +44,5 @@ export const playSong = async (song, onChordPlay) => {
 export const stopSong = () => {
   Tone.Transport.stop();
   Tone.Transport.cancel();
+  Tone.Transport.position = 0;
 };

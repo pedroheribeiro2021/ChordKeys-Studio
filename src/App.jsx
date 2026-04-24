@@ -2,6 +2,7 @@ import { useState } from "react";
 import Piano from "./components/Piano";
 import Controls from "./components/Controls";
 import Player from "./components/Player";
+import ChordInput from "./components/ChordInput";
 
 function App() {
   const [activeNotes, setActiveNotes] = useState([]);
@@ -17,6 +18,7 @@ function App() {
       <button onClick={() => setTranspose(transpose - 1)}>-1</button>
 
       <Piano activeNotes={activeNotes} />
+      <ChordInput setActiveNotes={setActiveNotes} transpose={transpose} />
       <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
       <Player setActiveNotes={setActiveNotes} transpose={transpose} />
     </div>
