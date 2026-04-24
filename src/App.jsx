@@ -1,16 +1,12 @@
-import { useEffect } from "react";
 import Piano from "./components/Piano";
-import { initAudio } from "./utils/audioEngine";
+import Controls from "./components/Controls";
 
 function App() {
-  useEffect(() => {
-    initAudio();
-  }, []);
-
   return (
     <div style={{ padding: "20px" }}>
       <h1>ChordKeys Studio</h1>
       <Piano />
+      <Controls />
     </div>
   );
 }
