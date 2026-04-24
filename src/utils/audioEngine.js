@@ -18,15 +18,20 @@ export const playNotes = async (notes) => {
   synth.triggerAttackRelease(notes, "8n");
 };
 
-export const playSong = async (song) => {
+export const playSong = async (song, onChordPlay) => {
   await initAudio();
 
-  Tone.Transport.cancel(); // limpa eventos antigos
+  Tone.Transport.cancel();
 
   song.forEach((item) => {
     Tone.Transport.schedule((time) => {
       const notes = getChordNotes(item.chord);
+
       synth.triggerAttackRelease(notes, "2n", time);
+
+      if (onChordPlay) {
+        onChordPlay(notes);
+      }
     }, item.time);
   });
 

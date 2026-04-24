@@ -1,18 +1,10 @@
 import { useState } from "react";
 import { playNotes } from "../utils/audioEngine";
 
-export default function Key({ note, isBlack }) {
-  const [active, setActive] = useState(false);
-
-  const handleClick = async () => {
-    await playNotes([note]); // agora ativa áudio corretamente
-    setActive(true);
-    setTimeout(() => setActive(false), 150);
-  };
-
+export default function Key({ note, isBlack, isActive, onPlay }) {
   return (
     <div
-      onClick={handleClick}
+      onClick={() => onPlay(note)}
       style={{
         width: isBlack ? "30px" : "50px",
         height: isBlack ? "120px" : "200px",
@@ -21,7 +13,14 @@ export default function Key({ note, isBlack }) {
         margin: "2px",
         position: "relative",
         zIndex: isBlack ? 2 : 1,
-        opacity: active ? 0.6 : 1,
+        background: isActive
+          ? isBlack
+            ? "#ff4d4f"
+            : "#ff7875"
+          : isBlack
+            ? "black"
+            : "white",
+        transition: "all 0.1s ease",
         cursor: "pointer",
       }}
     />
