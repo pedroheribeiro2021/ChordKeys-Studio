@@ -1,4 +1,5 @@
 import * as Tone from "tone";
+import { getChordNotes } from "./chordUtils";
 
 let synth;
 
@@ -13,6 +14,26 @@ export const initAudio = async () => {
 };
 
 export const playNotes = async (notes) => {
-  await initAudio(); // garante que está ativo
+  await initAudio();
   synth.triggerAttackRelease(notes, "8n");
+};
+
+export const playSong = async (song) => {
+  await initAudio();
+
+  Tone.Transport.cancel(); // limpa eventos antigos
+
+  song.forEach((item) => {
+    Tone.Transport.schedule((time) => {
+      const notes = getChordNotes(item.chord);
+      synth.triggerAttackRelease(notes, "2n", time);
+    }, item.time);
+  });
+
+  Tone.Transport.start();
+};
+
+export const stopSong = () => {
+  Tone.Transport.stop();
+  Tone.Transport.cancel();
 };
