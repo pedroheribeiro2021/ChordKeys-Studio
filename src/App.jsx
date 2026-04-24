@@ -1,5 +1,6 @@
 import Piano from "./components/Piano";
 import Controls from "./components/Controls";
+import Player from "./components/Player";
 
 function App() {
   return (
@@ -7,6 +8,7 @@ function App() {
       <h1>ChordKeys Studio</h1>
       <Piano />
       <Controls />
+      <Player />
     </div>
   );
 }
