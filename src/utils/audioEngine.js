@@ -45,3 +45,7 @@ export const stopSong = () => {
   Tone.Transport.cancel();
   Tone.Transport.position = 0;
 };
+
+export const setBPM = (bpm) => {
+  Tone.Transport.bpm.value = bpm;
+};

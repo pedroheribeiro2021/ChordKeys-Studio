@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { parseChords } from "../utils/parser";
 import { buildSong } from "../utils/songBuilder";
-import { playSong } from "../utils/audioEngine";
+import { playSong, setBPM } from "../utils/audioEngine";
 import { transposeChord } from "../utils/transpose";
 
 export default function ChordInput({
@@ -9,15 +9,19 @@ export default function ChordInput({
   setCurrentChord,
   setCurrentSong,
   transpose,
+  bpm,
+  duration,
 }) {
   const [input, setInput] = useState("C G Am F");
 
   const handlePlay = () => {
+    setBPM(bpm);
+
     const chords = parseChords(input);
 
     const transposed = chords.map((ch) => transposeChord(ch, transpose));
 
-    const song = buildSong(transposed);
+    const song = buildSong(transposed, duration);
 
     setCurrentSong(song);
 

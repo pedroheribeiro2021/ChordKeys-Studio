@@ -1,4 +1,4 @@
-import { playSong, stopSong } from "../utils/audioEngine";
+import { playSong, stopSong, setBPM } from "../utils/audioEngine";
 import { song } from "../utils/songData";
 import { transposeChord } from "../utils/transpose";
 
@@ -7,8 +7,11 @@ export default function Player({
   setCurrentChord,
   setCurrentSong,
   transpose,
+  bpm,
 }) {
   const handlePlay = () => {
+    setBPM(bpm);
+
     const transposedSong = song.map((item) => ({
       ...item,
       chord: transposeChord(item.chord, transpose),
