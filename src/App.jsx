@@ -11,6 +11,8 @@ function App() {
   const [transpose, setTranspose] = useState(0);
   const [currentChord, setCurrentChord] = useState(null);
   const [currentSong, setCurrentSong] = useState([]);
+  const [bpm, setBpm] = useState(90);
+  const [duration, setDuration] = useState(1);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -20,6 +22,31 @@ function App() {
 
       <button onClick={() => setTranspose(transpose + 1)}>+1</button>
       <button onClick={() => setTranspose(transpose - 1)}>-1</button>
+
+      <div style={{ marginTop: "20px" }}>
+        <h3>Controls</h3>
+
+        <label>BPM: {bpm}</label>
+        <input
+          type="range"
+          min="60"
+          max="180"
+          value={bpm}
+          onChange={(e) => setBpm(Number(e.target.value))}
+        />
+
+        <br />
+
+        <label>Chord Duration: {duration}</label>
+        <input
+          type="range"
+          min="0.5"
+          max="2"
+          step="0.5"
+          value={duration}
+          onChange={(e) => setDuration(Number(e.target.value))}
+        />
+      </div>
 
       <Timeline song={currentSong} currentChord={currentChord} />
       <ChordDisplay currentChord={currentChord} />
@@ -31,6 +58,7 @@ function App() {
         setCurrentChord={setCurrentChord}
         setCurrentSong={setCurrentSong}
         transpose={transpose}
+        bpm={bpm}
       />
 
       <ChordInput
@@ -38,6 +66,8 @@ function App() {
         setCurrentChord={setCurrentChord}
         setCurrentSong={setCurrentSong}
         transpose={transpose}
+        bpm={bpm}
+        duration={duration}
       />
     </div>
   );
