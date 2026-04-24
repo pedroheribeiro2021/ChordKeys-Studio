@@ -1,15 +1,18 @@
 import { playSong, stopSong } from "../utils/audioEngine";
 import { song } from "../utils/songData";
-import { getChordNotes } from "../utils/chordUtils";
+import { transposeChord } from "../utils/transpose";
 
-export default function Player({ setActiveNotes }) {
+export default function Player({ setActiveNotes, transpose }) {
   const handlePlay = () => {
-    playSong(song, (notes) => {
+    const transposedSong = song.map((item) => ({
+      ...item,
+      chord: transposeChord(item.chord, transpose),
+    }));
+
+    playSong(transposedSong, (notes) => {
       setActiveNotes(notes);
 
-      setTimeout(() => {
-        setActiveNotes([]);
-      }, 500);
+      setTimeout(() => setActiveNotes([]), 500);
     });
   };
 
