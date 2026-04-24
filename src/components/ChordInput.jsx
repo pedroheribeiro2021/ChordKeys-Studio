@@ -7,6 +7,7 @@ import { transposeChord } from "../utils/transpose";
 export default function ChordInput({
   setActiveNotes,
   setCurrentChord,
+  setCurrentSong,
   transpose,
 }) {
   const [input, setInput] = useState("C G Am F");
@@ -17,6 +18,8 @@ export default function ChordInput({
     const transposed = chords.map((ch) => transposeChord(ch, transpose));
 
     const song = buildSong(transposed);
+
+    setCurrentSong(song);
 
     playSong(song, (notes, chord) => {
       setActiveNotes(notes);
