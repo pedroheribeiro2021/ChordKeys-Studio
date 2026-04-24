@@ -21,7 +21,6 @@ export const playNotes = async (notes) => {
 export const playSong = async (song, onChordPlay) => {
   await initAudio();
 
-  // 🔥 RESET TOTAL
   Tone.Transport.stop();
   Tone.Transport.cancel();
   Tone.Transport.position = 0;
@@ -33,7 +32,7 @@ export const playSong = async (song, onChordPlay) => {
       synth.triggerAttackRelease(notes, "2n", time);
 
       if (onChordPlay) {
-        onChordPlay(notes);
+        onChordPlay(notes, item.chord); // 🔥 passa o acorde
       }
     }, item.time);
   });

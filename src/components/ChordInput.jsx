@@ -4,7 +4,11 @@ import { buildSong } from "../utils/songBuilder";
 import { playSong } from "../utils/audioEngine";
 import { transposeChord } from "../utils/transpose";
 
-export default function ChordInput({ setActiveNotes, transpose }) {
+export default function ChordInput({
+  setActiveNotes,
+  setCurrentChord,
+  transpose,
+}) {
   const [input, setInput] = useState("C G Am F");
 
   const handlePlay = () => {
@@ -14,8 +18,10 @@ export default function ChordInput({ setActiveNotes, transpose }) {
 
     const song = buildSong(transposed);
 
-    playSong(song, (notes) => {
+    playSong(song, (notes, chord) => {
       setActiveNotes(notes);
+      setCurrentChord(chord);
+
       setTimeout(() => setActiveNotes([]), 500);
     });
   };
