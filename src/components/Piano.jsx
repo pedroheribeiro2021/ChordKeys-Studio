@@ -1,4 +1,5 @@
 import Key from "./Key";
+import { playNotes } from "../utils/audioEngine";
 
 const notes = [
   "C4",
@@ -20,11 +21,21 @@ const notes = [
   "E5",
 ];
 
-export default function Piano() {
+export default function Piano({ activeNotes }) {
+  const handlePlay = (note) => {
+    playNotes([note]);
+  };
+
   return (
     <div style={{ display: "flex", position: "relative" }}>
       {notes.map((note) => (
-        <Key key={note} note={note} isBlack={note.includes("#")} />
+        <Key
+          key={note}
+          note={note}
+          isBlack={note.includes("#")}
+          isActive={activeNotes.includes(note)}
+          onPlay={handlePlay}
+        />
       ))}
     </div>
   );

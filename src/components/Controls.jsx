@@ -3,10 +3,14 @@ import { getChordNotes } from "../utils/chordUtils";
 
 const chords = ["C", "G", "Am", "F"];
 
-export default function Controls() {
+export default function Controls({ setActiveNotes }) {
   const handlePlayChord = (chord) => {
     const notes = getChordNotes(chord);
+
+    setActiveNotes(notes);
     playNotes(notes);
+
+    setTimeout(() => setActiveNotes([]), 500);
   };
 
   return (
