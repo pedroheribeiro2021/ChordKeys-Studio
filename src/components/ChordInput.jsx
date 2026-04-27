@@ -11,6 +11,8 @@ export default function ChordInput({
   transpose,
   bpm,
   duration,
+  setIsPlaying,
+  setSongDuration,
 }) {
   const [input, setInput] = useState("C G Am F");
 
@@ -23,7 +25,13 @@ export default function ChordInput({
 
     const song = buildSong(transposed, duration);
 
+    // Calcular duração total da música
+    const songDuration = song.length * duration;
+    setSongDuration(songDuration);
+
     setCurrentSong(song);
+
+    setIsPlaying(true);
 
     playSong(song, (notes, chord) => {
       setActiveNotes(notes);
@@ -31,6 +39,9 @@ export default function ChordInput({
 
       setTimeout(() => setActiveNotes([]), 500);
     });
+
+    // Parar quando terminar
+    setTimeout(() => setIsPlaying(false), songDuration * 1000);
   };
 
   return (
