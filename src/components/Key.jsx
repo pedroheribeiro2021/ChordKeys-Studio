@@ -6,7 +6,8 @@ export default function Key({ note, isBlack, isActive, onPlay }) {
     <div
       onClick={() => onPlay(note)}
       style={{
-        width: isBlack ? "30px" : "50px",
+        width: isBlack ? "6vw" : "10vw",
+        maxWidth: isBlack ? "30px" : "50px",
         height: isBlack ? "120px" : "200px",
         background: isActive ? "#ff4d4f" : isBlack ? "#111" : "#fff",
         border: isBlack ? "none" : "1px solid #ccc",

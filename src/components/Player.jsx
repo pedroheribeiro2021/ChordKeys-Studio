@@ -11,8 +11,12 @@ export default function Player({
   setIsPlaying,
   setSongDuration,
   duration,
+  learningMode,
 }) {
   const handlePlay = () => {
+    // Travar autoplay no modo aprendizado
+    if (learningMode) return;
+
     setBPM(bpm);
 
     const transposedSong = song.map((item) => ({

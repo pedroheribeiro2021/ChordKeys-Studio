@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Key from "./Key";
 import { playNotes } from "../utils/audioEngine";
 
@@ -13,8 +14,22 @@ const blackPattern = {
   A: "A#",
 };
 
-export default function Piano({ activeNotes }) {
-  const handlePlay = (note) => playNotes([note]);
+export default function Piano({ activeNotes, onUserPlay }) {
+  const [pressed, setPressed] = useState([]);
+
+  const handlePlay = (note) => {
+    playNotes([note]);
+
+    const updated = [...pressed, note];
+    setPressed(updated);
+
+    if (onUserPlay) {
+      onUserPlay(updated);
+    }
+
+    // limpa depois de curto tempo
+    setTimeout(() => setPressed([]), 600);
+  };
 
   return (
     <div style={styles.wrapper}>
@@ -31,7 +46,9 @@ export default function Piano({ activeNotes }) {
                 <Key
                   note={fullNote}
                   isBlack={false}
-                  isActive={activeNotes.includes(fullNote)}
+                  isActive={
+                    activeNotes.includes(fullNote) || pressed.includes(fullNote)
+                  }
                   onPlay={handlePlay}
                 />
 
@@ -41,7 +58,10 @@ export default function Piano({ activeNotes }) {
                     <Key
                       note={sharpNote}
                       isBlack={true}
-                      isActive={activeNotes.includes(sharpNote)}
+                      isActive={
+                        activeNotes.includes(sharpNote) ||
+                        pressed.includes(sharpNote)
+                      }
                       onPlay={handlePlay}
                     />
                   </div>

@@ -13,10 +13,14 @@ export default function ChordInput({
   duration,
   setIsPlaying,
   setSongDuration,
+  learningMode,
 }) {
   const [input, setInput] = useState("C G Am F");
 
   const handlePlay = () => {
+    // Travar autoplay no modo aprendizado
+    if (learningMode) return;
+
     setBPM(bpm);
 
     const chords = parseChords(input);
