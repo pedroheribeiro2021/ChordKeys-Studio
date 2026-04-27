@@ -1,42 +1,81 @@
 import Key from "./Key";
 import { playNotes } from "../utils/audioEngine";
 
-const notes = [
-  "C4",
-  "C#4",
-  "D4",
-  "D#4",
-  "E4",
-  "F4",
-  "F#4",
-  "G4",
-  "G#4",
-  "A4",
-  "A#4",
-  "B4",
-  "C5",
-  "C#5",
-  "D5",
-  "D#5",
-  "E5",
-];
+const octaves = [{ base: 3 }, { base: 4 }];
+
+const whitePattern = ["C", "D", "E", "F", "G", "A", "B"];
+
+const blackPattern = {
+  C: "C#",
+  D: "D#",
+  F: "F#",
+  G: "G#",
+  A: "A#",
+};
 
 export default function Piano({ activeNotes }) {
-  const handlePlay = (note) => {
-    playNotes([note]);
-  };
+  const handlePlay = (note) => playNotes([note]);
 
   return (
-    <div style={{ display: "flex", position: "relative" }}>
-      {notes.map((note) => (
-        <Key
-          key={note}
-          note={note}
-          isBlack={note.includes("#")}
-          isActive={activeNotes.includes(note)}
-          onPlay={handlePlay}
-        />
-      ))}
+    <div style={styles.wrapper}>
+      <div style={styles.keyboard}>
+        {octaves.map((octave) =>
+          whitePattern.map((note, index) => {
+            const fullNote = `${note}${octave.base}`;
+            const sharp = blackPattern[note];
+            const sharpNote = sharp ? `${sharp}${octave.base}` : null;
+
+            return (
+              <div key={fullNote} style={styles.whiteKeyWrapper}>
+                {/* White key */}
+                <Key
+                  note={fullNote}
+                  isBlack={false}
+                  isActive={activeNotes.includes(fullNote)}
+                  onPlay={handlePlay}
+                />
+
+                {/* Black key */}
+                {sharpNote && (
+                  <div style={styles.blackKeyWrapper}>
+                    <Key
+                      note={sharpNote}
+                      isBlack={true}
+                      isActive={activeNotes.includes(sharpNote)}
+                      onPlay={handlePlay}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          }),
+        )}
+      </div>
     </div>
   );
 }
+
+const styles = {
+  wrapper: {
+    display: "flex",
+    justifyContent: "center",
+    marginTop: "30px",
+  },
+  keyboard: {
+    display: "flex",
+    position: "relative",
+    background: "#222",
+    padding: "10px",
+    borderRadius: "10px",
+  },
+  whiteKeyWrapper: {
+    position: "relative",
+    width: "50px",
+  },
+  blackKeyWrapper: {
+    position: "absolute",
+    top: 0,
+    right: "-15px",
+    zIndex: 10,
+  },
+};

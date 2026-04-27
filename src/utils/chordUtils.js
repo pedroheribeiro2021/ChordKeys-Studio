@@ -1,29 +1,39 @@
-const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-// converte nota → índice
-const getNoteIndex = (note) => notes.indexOf(note);
+function getNoteIndex(note) {
+  return NOTES.indexOf(note);
+}
 
-// gera nota com oitava
-const buildNote = (note, octave) => `${note}${octave}`;
+function getNoteWithOctave(note, octave) {
+  return `${note}${octave}`;
+}
 
-// função principal
-export const getChordNotes = (chord) => {
-  const isMinor = chord.includes("m");
-  const root = chord.replace("m", "");
+export function getChordNotes(chord) {
+  const rootMatch = chord.match(/^([A-G]#?)/);
+  if (!rootMatch) return [];
+
+  const root = rootMatch[1];
+  const isMinor = chord.includes("m") && !chord.includes("maj");
 
   const rootIndex = getNoteIndex(root);
-  if (rootIndex === -1) return [];
 
-  // intervalos musicais
-  const intervals = isMinor
-    ? [0, 3, 7] // menor
-    : [0, 4, 7]; // maior
+  let intervals;
 
-  const baseOctave = 4;
+  if (isMinor) {
+    intervals = [0, 3, 7];
+  } else {
+    intervals = [0, 4, 7];
+  }
+
+  // 🔥 BASE: começa na oitava 3
+  let octave = 3;
 
   return intervals.map((interval) => {
-    const noteIndex = (rootIndex + interval) % 12;
-    const octaveShift = Math.floor((rootIndex + interval) / 12);
-    return buildNote(notes[noteIndex], baseOctave + octaveShift);
+    let index = rootIndex + interval;
+
+    let noteOctave = octave + Math.floor(index / 12);
+    let note = NOTES[index % 12];
+
+    return getNoteWithOctave(note, noteOctave);
   });
-};
+}

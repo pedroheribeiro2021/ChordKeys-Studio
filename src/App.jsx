@@ -14,8 +14,17 @@ function App() {
   const [bpm, setBpm] = useState(90);
   const [duration, setDuration] = useState(1);
 
+  const styles = {
+    app: {
+      maxWidth: "900px",
+      margin: "0 auto",
+      padding: "20px",
+      textAlign: "center",
+    },
+  };
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={styles.app}>
       <h1>ChordKeys Studio</h1>
 
       <p>Transpose: {transpose}</p>
@@ -26,7 +35,14 @@ function App() {
       <div style={{ marginTop: "20px" }}>
         <h3>Controls</h3>
 
-        <label>BPM: {bpm}</label>
+        <label>BPM:</label>
+        <input
+          type="number"
+          value={bpm}
+          onChange={(e) => setBpm(Number(e.target.value))}
+          style={{ width: "60px", marginLeft: "10px" }}
+        />
+
         <input
           type="range"
           min="60"

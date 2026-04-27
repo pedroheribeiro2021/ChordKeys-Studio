@@ -8,20 +8,14 @@ export default function Key({ note, isBlack, isActive, onPlay }) {
       style={{
         width: isBlack ? "30px" : "50px",
         height: isBlack ? "120px" : "200px",
-        background: isBlack ? "black" : "white",
-        border: "1px solid #333",
-        margin: "2px",
-        position: "relative",
-        zIndex: isBlack ? 2 : 1,
-        background: isActive
-          ? isBlack
-            ? "#ff4d4f"
-            : "#ff7875"
-          : isBlack
-            ? "black"
-            : "white",
-        transition: "all 0.1s ease",
+        background: isActive ? "#ff4d4f" : isBlack ? "#111" : "#fff",
+        border: isBlack ? "none" : "1px solid #ccc",
+        borderRadius: "6px",
+        boxShadow: isBlack
+          ? "0 4px 6px rgba(0,0,0,0.5)"
+          : "0 2px 4px rgba(0,0,0,0.2)",
         cursor: "pointer",
+        transition: "all 0.1s ease",
       }}
     />
   );
