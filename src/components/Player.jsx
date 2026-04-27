@@ -8,6 +8,9 @@ export default function Player({
   setCurrentSong,
   transpose,
   bpm,
+  setIsPlaying,
+  setSongDuration,
+  duration,
 }) {
   const handlePlay = () => {
     setBPM(bpm);
@@ -19,12 +22,21 @@ export default function Player({
 
     setCurrentSong(transposedSong);
 
+    // Calcular duração total da música
+    const songDuration = transposedSong.length * duration;
+    setSongDuration(songDuration);
+
+    setIsPlaying(true);
+
     playSong(transposedSong, (notes, chord) => {
       setActiveNotes(notes);
       setCurrentChord(chord);
 
       setTimeout(() => setActiveNotes([]), 500);
     });
+
+    // Parar quando terminar
+    setTimeout(() => setIsPlaying(false), songDuration * 1000);
   };
 
   return (

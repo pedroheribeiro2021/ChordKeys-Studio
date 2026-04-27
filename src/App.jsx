@@ -5,6 +5,7 @@ import Player from "./components/Player";
 import ChordInput from "./components/ChordInput";
 import ChordDisplay from "./components/ChordDisplay";
 import Timeline from "./components/Timeline";
+import ProgressBar from "./components/ProgressBar";
 
 function App() {
   const [activeNotes, setActiveNotes] = useState([]);
@@ -13,6 +14,8 @@ function App() {
   const [currentSong, setCurrentSong] = useState([]);
   const [bpm, setBpm] = useState(90);
   const [duration, setDuration] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [songDuration, setSongDuration] = useState(0);
 
   const styles = {
     app: {
@@ -65,6 +68,7 @@ function App() {
       </div>
 
       <Timeline song={currentSong} currentChord={currentChord} />
+      <ProgressBar duration={songDuration} isPlaying={isPlaying} />
       <ChordDisplay currentChord={currentChord} />
 
       <Piano activeNotes={activeNotes} />
@@ -75,6 +79,9 @@ function App() {
         setCurrentSong={setCurrentSong}
         transpose={transpose}
         bpm={bpm}
+        setIsPlaying={setIsPlaying}
+        setSongDuration={setSongDuration}
+        duration={duration}
       />
 
       <ChordInput
@@ -84,6 +91,8 @@ function App() {
         transpose={transpose}
         bpm={bpm}
         duration={duration}
+        setIsPlaying={setIsPlaying}
+        setSongDuration={setSongDuration}
       />
     </div>
   );
