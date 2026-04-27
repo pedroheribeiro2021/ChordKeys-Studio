@@ -1,21 +1,21 @@
 import * as Tone from "tone";
-import { getChordNotes } from "./chordUtils";
+import { getChordNotes } from "../utils/chordUtils";
 
 let synth;
 
 export const initAudio = async () => {
-  if (Tone.context.state !== "running") {
-    await Tone.start();
-  }
+  await Tone.start();
 
-  if (!synth) {
-    synth = new Tone.PolySynth(Tone.Synth).toDestination();
-  }
+  synth = new Tone.PolySynth(Tone.Synth).toDestination();
 };
 
-export const playNotes = async (notes) => {
-  await initAudio();
-  synth.triggerAttackRelease(notes, "8n");
+// 🔥 NOVA FUNÇÃO DE STRUM
+const playChordStrum = (notes, time) => {
+  const strumDelay = 0.05; // 50ms entre notas
+
+  notes.forEach((note, index) => {
+    synth.triggerAttackRelease(note, "2n", time + index * strumDelay);
+  });
 };
 
 export const playSong = async (song, onChordPlay) => {
@@ -29,10 +29,11 @@ export const playSong = async (song, onChordPlay) => {
     Tone.Transport.schedule((time) => {
       const notes = getChordNotes(item.chord);
 
-      synth.triggerAttackRelease(notes, "2n", time);
+      // 🔥 AQUI TROCA
+      playChordStrum(notes, time);
 
       if (onChordPlay) {
-        onChordPlay(notes, item.chord); // 🔥 passa o acorde
+        onChordPlay(notes, item.chord);
       }
     }, item.time);
   });
@@ -48,4 +49,9 @@ export const stopSong = () => {
 
 export const setBPM = (bpm) => {
   Tone.Transport.bpm.value = bpm;
+};
+
+export const playNotes = async (notes) => {
+  await initAudio();
+  synth.triggerAttackRelease(notes, "2n");
 };
