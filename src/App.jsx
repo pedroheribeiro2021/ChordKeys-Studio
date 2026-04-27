@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Piano from "./components/Piano";
 import Controls from "./components/Controls";
 import Player from "./components/Player";
@@ -7,6 +7,9 @@ import ChordDisplay from "./components/ChordDisplay";
 import Timeline from "./components/Timeline";
 import ProgressBar from "./components/ProgressBar";
 import Metronome from "./components/Metronome";
+import ChordMiniKeyboard from "./components/ChordMiniKeyboard";
+import { matchChord } from "./utils/chordMatcher";
+import { getChordNotes } from "./utils/chordUtils";
 
 function App() {
   const [activeNotes, setActiveNotes] = useState([]);
@@ -17,13 +20,42 @@ function App() {
   const [duration, setDuration] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [songDuration, setSongDuration] = useState(0);
+  const [learningMode, setLearningMode] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Define o acorde inicial quando entra no modo aprendizado
+  useEffect(() => {
+    if (learningMode && currentSong.length > 0) {
+      setCurrentChord(currentSong[0]?.chord);
+      setCurrentIndex(0);
+    }
+  }, [learningMode]);
+
+  // Lógica para capturar notas tocadas pelo usuário
+  const handleUserPlay = (notes) => {
+    if (!learningMode) return;
+
+    const current = currentSong[currentIndex];
+    if (!current) return;
+
+    const expected = getChordNotes(current.chord);
+    const isCorrect = matchChord(notes, expected);
+
+    if (isCorrect) {
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      setCurrentChord(currentSong[nextIndex]?.chord);
+    }
+  };
 
   const styles = {
     app: {
       maxWidth: "900px",
       margin: "0 auto",
-      padding: "20px",
-      textAlign: "center",
+      padding: "16px",
+    },
+    section: {
+      marginBottom: "20px",
     },
   };
 
@@ -35,6 +67,15 @@ function App() {
 
       <button onClick={() => setTranspose(transpose + 1)}>+1</button>
       <button onClick={() => setTranspose(transpose - 1)}>-1</button>
+
+      <button
+        onClick={() => {
+          setLearningMode((prev) => !prev);
+          setCurrentIndex(0);
+        }}
+      >
+        {learningMode ? "Learning ON" : "Learning OFF"}
+      </button>
 
       <div style={{ marginTop: "20px" }}>
         <h3>Controls</h3>
@@ -70,10 +111,11 @@ function App() {
 
       <Timeline song={currentSong} currentChord={currentChord} />
       <ProgressBar duration={songDuration} isPlaying={isPlaying} />
+      <ChordMiniKeyboard chord={currentChord} />
       <Metronome bpm={bpm} isPlaying={isPlaying} />
       <ChordDisplay currentChord={currentChord} />
 
-      <Piano activeNotes={activeNotes} />
+      <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
       <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
       <Player
         setActiveNotes={setActiveNotes}
@@ -84,6 +126,7 @@ function App() {
         setIsPlaying={setIsPlaying}
         setSongDuration={setSongDuration}
         duration={duration}
+        learningMode={learningMode}
       />
 
       <ChordInput
@@ -95,6 +138,7 @@ function App() {
         duration={duration}
         setIsPlaying={setIsPlaying}
         setSongDuration={setSongDuration}
+        learningMode={learningMode}
       />
     </div>
   );
