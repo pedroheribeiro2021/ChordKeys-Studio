@@ -6,6 +6,7 @@ import ChordInput from "./components/ChordInput";
 import ChordDisplay from "./components/ChordDisplay";
 import Timeline from "./components/Timeline";
 import ProgressBar from "./components/ProgressBar";
+import Metronome from "./components/Metronome";
 
 function App() {
   const [activeNotes, setActiveNotes] = useState([]);
@@ -69,6 +70,7 @@ function App() {
 
       <Timeline song={currentSong} currentChord={currentChord} />
       <ProgressBar duration={songDuration} isPlaying={isPlaying} />
+      <Metronome bpm={bpm} isPlaying={isPlaying} />
       <ChordDisplay currentChord={currentChord} />
 
       <Piano activeNotes={activeNotes} />
