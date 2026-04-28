@@ -1,19 +1,17 @@
 import { useEffect, useRef } from "react";
 
-export default function Timeline({ song, currentChord }) {
+export default function Timeline({ song, currentIndex }) {
   const chordRefs = useRef([]);
 
   useEffect(() => {
-    const index = song.findIndex((item) => item.chord === currentChord);
-
-    if (index !== -1 && chordRefs.current[index]) {
-      chordRefs.current[index].scrollIntoView({
+    if (chordRefs.current[currentIndex]) {
+      chordRefs.current[currentIndex].scrollIntoView({
         behavior: "smooth",
         inline: "center",
         block: "nearest",
       });
     }
-  }, [currentChord, song]);
+  }, [currentIndex]);
 
   return (
     <div style={{ marginTop: "20px" }}>
@@ -21,7 +19,7 @@ export default function Timeline({ song, currentChord }) {
 
       <div style={styles.container}>
         {song.map((item, index) => {
-          const isActive = item.chord === currentChord;
+          const isActive = index === currentIndex;
 
           return (
             <div

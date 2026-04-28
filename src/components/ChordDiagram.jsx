@@ -63,18 +63,23 @@ const renderMiniChord = (chord, isActive = false) => {
   );
 };
 
-export default function ChordDiagram({ song, currentChord }) {
+export default function ChordDiagram({ song, currentIndex }) {
   if (!song || song.length === 0) return null;
 
-  // Extrai acordes únicos da song
-  const uniqueChords = [...new Set(song.map((item) => item.chord))];
+  // Extrai acordes únicos mantendo a ordem de aparição
+  const uniqueChords = [];
+  song.forEach((item) => {
+    if (!uniqueChords.includes(item.chord)) {
+      uniqueChords.push(item.chord);
+    }
+  });
 
   return (
     <div style={styles.container}>
       <div style={styles.title}>Acordes da Música</div>
       <div style={styles.diagram}>
         {uniqueChords.map((chord, index) => {
-          const isActive = chord === currentChord;
+          const isActive = song[currentIndex]?.chord === chord;
           return (
             <div
               key={index}
