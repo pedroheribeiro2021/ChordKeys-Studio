@@ -25,7 +25,7 @@ export const playSong = async (song, onChordPlay) => {
   Tone.Transport.cancel();
   Tone.Transport.position = 0;
 
-  song.forEach((item) => {
+  song.forEach((item, index) => {
     Tone.Transport.schedule((time) => {
       const notes = getChordNotes(item.chord);
 
@@ -33,7 +33,7 @@ export const playSong = async (song, onChordPlay) => {
       playChordStrum(notes, time);
 
       if (onChordPlay) {
-        onChordPlay(notes, item.chord);
+        onChordPlay(notes, item.chord, index);
       }
     }, item.time);
   });

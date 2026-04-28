@@ -21,21 +21,10 @@ function App() {
   const [duration, setDuration] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [songDuration, setSongDuration] = useState(0);
-  const [learningMode, setLearningMode] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  // Define o acorde inicial quando entra no modo aprendizado
-  useEffect(() => {
-    if (learningMode && currentSong.length > 0) {
-      setCurrentChord(currentSong[0]?.chord);
-      setCurrentIndex(0);
-    }
-  }, [learningMode]);
 
   // Lógica para capturar notas tocadas pelo usuário
   const handleUserPlay = (notes) => {
-    if (!learningMode) return;
-
     const current = currentSong[currentIndex];
     if (!current) return;
 
@@ -69,15 +58,6 @@ function App() {
       <button onClick={() => setTranspose(transpose + 1)}>+1</button>
       <button onClick={() => setTranspose(transpose - 1)}>-1</button>
 
-      <button
-        onClick={() => {
-          setLearningMode((prev) => !prev);
-          setCurrentIndex(0);
-        }}
-      >
-        {learningMode ? "Learning ON" : "Learning OFF"}
-      </button>
-
       <div style={{ marginTop: "20px" }}>
         <h3>Controls</h3>
 
@@ -110,9 +90,23 @@ function App() {
         />
       </div>
 
-      <Timeline song={currentSong} currentChord={currentChord} />
+      {/* Letra ativa com efeito karaokê */}
+      <div
+        style={{
+          textAlign: "center",
+          margin: "10px 0",
+          fontSize: "18px",
+          fontWeight: "bold",
+          color: "#ff4d4f",
+          minHeight: "24px",
+        }}
+      >
+        {currentSong[currentIndex]?.lyric}
+      </div>
+
+      <Timeline song={currentSong} currentIndex={currentIndex} />
       <ProgressBar duration={songDuration} isPlaying={isPlaying} />
-      <ChordDiagram song={currentSong} currentChord={currentChord} />
+      <ChordDiagram song={currentSong} currentIndex={currentIndex} />
       {/* <ChordMiniKeyboard chord={currentChord} /> */}
       <Metronome bpm={bpm} isPlaying={isPlaying} />
       <ChordDisplay currentChord={currentChord} />
@@ -128,7 +122,7 @@ function App() {
         setIsPlaying={setIsPlaying}
         setSongDuration={setSongDuration}
         duration={duration}
-        learningMode={learningMode}
+        setCurrentIndex={setCurrentIndex}
       />
 
       <ChordInput
@@ -140,7 +134,7 @@ function App() {
         duration={duration}
         setIsPlaying={setIsPlaying}
         setSongDuration={setSongDuration}
-        learningMode={learningMode}
+        setCurrentIndex={setCurrentIndex}
       />
     </div>
   );

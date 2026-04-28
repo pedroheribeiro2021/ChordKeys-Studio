@@ -5,7 +5,7 @@ export const buildSong = (chords, duration = 1) => {
   }));
 };
 
-export const buildSongFromLyrics = (parsed) => {
+export const buildSongFromLyrics = (parsed, duration = 1) => {
   let time = 0;
   const song = [];
 
@@ -17,7 +17,7 @@ export const buildSongFromLyrics = (parsed) => {
         lyric: block.lyrics,
       });
 
-      time += 1;
+      time += duration;
     });
   });
 

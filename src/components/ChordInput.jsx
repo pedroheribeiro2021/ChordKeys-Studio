@@ -14,14 +14,11 @@ export default function ChordInput({
   duration,
   setIsPlaying,
   setSongDuration,
-  learningMode,
+  setCurrentIndex,
 }) {
   const [input, setInput] = useState("C G Am F");
 
   const handlePlay = () => {
-    // Travar autoplay no modo aprendizado
-    if (learningMode) return;
-
     setBPM(bpm);
 
     // Tenta parsear como letra com acordes
@@ -30,7 +27,7 @@ export default function ChordInput({
     let song;
     if (parsed.length > 0) {
       // Formato de letra com acordes
-      song = buildSongFromLyrics(parsed);
+      song = buildSongFromLyrics(parsed, duration);
     } else {
       // Formato simples (acordes apenas)
       const chords = parseChords(input);
@@ -46,9 +43,10 @@ export default function ChordInput({
 
     setIsPlaying(true);
 
-    playSong(song, (notes, chord) => {
+    playSong(song, (notes, chord, index) => {
       setActiveNotes(notes);
       setCurrentChord(chord);
+      setCurrentIndex(index);
 
       setTimeout(() => setActiveNotes([]), 500);
     });

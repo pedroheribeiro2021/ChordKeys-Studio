@@ -11,12 +11,9 @@ export default function Player({
   setIsPlaying,
   setSongDuration,
   duration,
-  learningMode,
+  setCurrentIndex,
 }) {
   const handlePlay = () => {
-    // Travar autoplay no modo aprendizado
-    if (learningMode) return;
-
     setBPM(bpm);
 
     const transposedSong = song.map((item) => ({
@@ -32,9 +29,10 @@ export default function Player({
 
     setIsPlaying(true);
 
-    playSong(transposedSong, (notes, chord) => {
+    playSong(transposedSong, (notes, chord, index) => {
       setActiveNotes(notes);
       setCurrentChord(chord);
+      setCurrentIndex(index);
 
       setTimeout(() => setActiveNotes([]), 500);
     });
