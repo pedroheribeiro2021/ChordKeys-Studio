@@ -22,6 +22,14 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [songDuration, setSongDuration] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [url, setUrl] = useState("");
+  const [input, setInput] = useState("");
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("history") || "[]");
+    setHistory(saved);
+  }, []);
 
   // Lógica para capturar notas tocadas pelo usuário
   const handleUserPlay = (notes) => {
@@ -36,6 +44,19 @@ function App() {
       setCurrentIndex(nextIndex);
       setCurrentChord(currentSong[nextIndex]?.chord);
     }
+  };
+
+  const handleFetchFromUrl = async () => {
+    const res = await fetch(`/api/fetch-chords?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+
+    setInput(data.text);
+
+    const history = JSON.parse(localStorage.getItem("history") || "[]");
+
+    const updated = [url, ...history.filter((u) => u !== url)].slice(0, 5);
+
+    localStorage.setItem("history", JSON.stringify(updated));
   };
 
   const styles = {
@@ -58,7 +79,7 @@ function App() {
   };
 
   return (
-    <div style={styles.app}>
+    <><div style={styles.app}>
       <h1>ChordKeys Studio</h1>
 
       <p>Transpose: {transpose}</p>
@@ -74,16 +95,14 @@ function App() {
           type="number"
           value={bpm}
           onChange={(e) => setBpm(Number(e.target.value))}
-          style={{ width: "60px", marginLeft: "10px" }}
-        />
+          style={{ width: "60px", marginLeft: "10px" }} />
 
         <input
           type="range"
           min="60"
           max="180"
           value={bpm}
-          onChange={(e) => setBpm(Number(e.target.value))}
-        />
+          onChange={(e) => setBpm(Number(e.target.value))} />
 
         <br />
 
@@ -94,8 +113,7 @@ function App() {
           max="2"
           step="0.5"
           value={duration}
-          onChange={(e) => setDuration(Number(e.target.value))}
-        />
+          onChange={(e) => setDuration(Number(e.target.value))} />
       </div>
 
       {/* Letra ativa com efeito karaokê */}
@@ -130,8 +148,7 @@ function App() {
         setIsPlaying={setIsPlaying}
         setSongDuration={setSongDuration}
         duration={duration}
-        setCurrentIndex={setCurrentIndex}
-      />
+        setCurrentIndex={setCurrentIndex} />
 
       <ChordInput
         setActiveNotes={setActiveNotes}
@@ -143,8 +160,23 @@ function App() {
         setIsPlaying={setIsPlaying}
         setSongDuration={setSongDuration}
         setCurrentIndex={setCurrentIndex}
-      />
-    </div>
+        externalInput={input} />
+
+      <input
+        type="text"
+        placeholder="Paste song URL"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)} />
+
+      <button onClick={handleFetchFromUrl}>Import from URL</button>
+    </div><div>
+        <h4>Recent Songs</h4>
+        {history.map((h, i) => (
+          <button key={i} onClick={() => setUrl(h)}>
+            {h}
+          </button>
+        ))}
+      </div></>
   );
 }
 

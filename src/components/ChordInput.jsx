@@ -4,6 +4,7 @@ import { buildSong, buildSongFromLyrics } from "../utils/songBuilder";
 import { parseLyricsWithChords } from "../utils/lyricsParser";
 import { playSong, setBPM } from "../utils/audioEngine";
 import { transposeChord } from "../utils/transpose";
+import { useEffect } from "react";
 
 export default function ChordInput({
   setActiveNotes,
@@ -15,8 +16,15 @@ export default function ChordInput({
   setIsPlaying,
   setSongDuration,
   setCurrentIndex,
+  externalInput,
 }) {
-  const [input, setInput] = useState("C G Am F");
+  const [input, setInput] = useState("");
+
+  useEffect(() => {
+    if (externalInput) {
+      setInput(externalInput);
+    }
+  }, [externalInput]);
 
   const handlePlay = () => {
     setBPM(bpm);
