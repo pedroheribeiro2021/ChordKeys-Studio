@@ -10,11 +10,16 @@ export const buildSongFromLyrics = (parsed, duration = 1) => {
   const song = [];
 
   parsed.forEach((block) => {
-    block.chords.forEach((chord) => {
+    const words = block.lyrics.split(" ");
+    const step = Math.ceil(words.length / block.chords.length);
+
+    block.chords.forEach((chord, index) => {
+      const lyricPart = words.slice(index * step, (index + 1) * step).join(" ");
+
       song.push({
         chord,
         time,
-        lyric: block.lyrics,
+        lyric: lyricPart,
       });
 
       time += duration;
