@@ -8,6 +8,7 @@ import Timeline from "./components/Timeline";
 import ProgressBar from "./components/ProgressBar";
 import Metronome from "./components/Metronome";
 import ChordMiniKeyboard from "./components/ChordMiniKeyboard";
+import ChordDiagram from "./components/ChordDiagram";
 import { matchChord } from "./utils/chordMatcher";
 import { getChordNotes } from "./utils/chordUtils";
 
@@ -111,7 +112,8 @@ function App() {
 
       <Timeline song={currentSong} currentChord={currentChord} />
       <ProgressBar duration={songDuration} isPlaying={isPlaying} />
-      <ChordMiniKeyboard chord={currentChord} />
+      <ChordDiagram song={currentSong} currentChord={currentChord} />
+      {/* <ChordMiniKeyboard chord={currentChord} /> */}
       <Metronome bpm={bpm} isPlaying={isPlaying} />
       <ChordDisplay currentChord={currentChord} />
 
