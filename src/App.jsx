@@ -47,6 +47,14 @@ function App() {
     section: {
       marginBottom: "20px",
     },
+    karaoke: {
+      textAlign: "center",
+      fontSize: "20px",
+      fontWeight: "bold",
+      margin: "20px 0",
+      color: "#fff",
+      transition: "all 0.3s ease",
+    },
   };
 
   return (
@@ -108,9 +116,9 @@ function App() {
       <ProgressBar duration={songDuration} isPlaying={isPlaying} />
       <ChordDiagram song={currentSong} currentIndex={currentIndex} />
       {/* <ChordMiniKeyboard chord={currentChord} /> */}
-      <Metronome bpm={bpm} isPlaying={isPlaying} />
-      <ChordDisplay currentChord={currentChord} />
-
+      {/* <Metronome bpm={bpm} isPlaying={isPlaying} /> */}
+      {/* <ChordDisplay currentChord={currentChord} /> */}
+      <div style={styles.karaoke}>{currentSong[currentIndex]?.lyric}</div>
       <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
       <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
       <Player

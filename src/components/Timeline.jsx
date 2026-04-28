@@ -7,8 +7,8 @@ export default function Timeline({ song, currentIndex }) {
     if (chordRefs.current[currentIndex]) {
       chordRefs.current[currentIndex].scrollIntoView({
         behavior: "smooth",
+        block: "center",
         inline: "center",
-        block: "nearest",
       });
     }
   }, [currentIndex]);
@@ -29,21 +29,11 @@ export default function Timeline({ song, currentIndex }) {
                 ...styles.chord,
                 background: isActive ? "#ff4d4f" : "#eee",
                 color: isActive ? "white" : "black",
-                transform: isActive ? "scale(1.2)" : "scale(1)",
+                transform: isActive ? "scale(1.15)" : "scale(1)",
+                opacity: isActive ? 1 : 0.6,
               }}
             >
               <div>{item.chord}</div>
-              {item.lyric && (
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: isActive ? "#fff" : "#666",
-                    marginTop: "4px",
-                  }}
-                >
-                  {item.lyric}
-                </div>
-              )}
             </div>
           );
         })}
