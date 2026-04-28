@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { parseChords } from "../utils/parser";
-import { buildSong } from "../utils/songBuilder";
+import { buildSong, buildSongFromLyrics } from "../utils/songBuilder";
+import { parseLyricsWithChords } from "../utils/lyricsParser";
 import { playSong, setBPM } from "../utils/audioEngine";
 import { transposeChord } from "../utils/transpose";
 
@@ -23,11 +24,19 @@ export default function ChordInput({
 
     setBPM(bpm);
 
-    const chords = parseChords(input);
+    // Tenta parsear como letra com acordes
+    const parsed = parseLyricsWithChords(input);
 
-    const transposed = chords.map((ch) => transposeChord(ch, transpose));
-
-    const song = buildSong(transposed, duration);
+    let song;
+    if (parsed.length > 0) {
+      // Formato de letra com acordes
+      song = buildSongFromLyrics(parsed);
+    } else {
+      // Formato simples (acordes apenas)
+      const chords = parseChords(input);
+      const transposed = chords.map((ch) => transposeChord(ch, transpose));
+      song = buildSong(transposed, duration);
+    }
 
     // Calcular duração total da música
     const songDuration = song.length * duration;

@@ -34,7 +34,18 @@ export default function Timeline({ song, currentChord }) {
                 transform: isActive ? "scale(1.2)" : "scale(1)",
               }}
             >
-              {item.chord}
+              <div>{item.chord}</div>
+              {item.lyric && (
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: isActive ? "#fff" : "#666",
+                    marginTop: "4px",
+                  }}
+                >
+                  {item.lyric}
+                </div>
+              )}
             </div>
           );
         })}
