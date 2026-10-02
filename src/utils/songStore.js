@@ -36,7 +36,7 @@ const withStore = async (mode, fn) => {
 const newId = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-// song: { id?, title, artist, text, transpose, capo, simplify, sourceUrl }
+// song: { id?, title, artist, text, transpose, capo, simplify }
 export async function saveSong(song) {
   const now = new Date().toISOString();
   const existing = song.id ? await getSong(song.id) : null;
@@ -46,7 +46,6 @@ export async function saveSong(song) {
     capo: 0,
     simplify: false,
     artist: "",
-    sourceUrl: "",
     ...existing,
     ...song,
     id: song.id ?? newId(),

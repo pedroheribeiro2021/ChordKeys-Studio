@@ -315,26 +315,6 @@ input[type="range"] {
   min-height: 32px;
 }
 
-/* ---------- Histórico ---------- */
-
-.history {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
-}
-
-.history .btn {
-  flex: none;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-  line-height: 34px;
-}
-
 /* ---------- Tocando agora ---------- */
 
 .karaoke {

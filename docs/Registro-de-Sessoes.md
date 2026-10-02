@@ -63,3 +63,25 @@
 **Decisões**: ADR 0001 (cifras só no aparelho). Desenhos de violão ignoram o baixo invertido. A simplificação reduz tudo a maior, menor ou diminuto.
 
 **Próximos passos**: excluir o projeto duplicado na Vercel, decidir o futuro do import e testar no celular.
+
+## 2026-10-02 — Importar por colar e por arquivo; fim do import por URL (PR 4)
+
+**Objetivo**: substituir o import por URL (bloqueado pelo Cifra Club) por formas que não dependem de buscar páginas de terceiros.
+
+**Alterações** (branch `feat/file-import`, criada a partir de `feat/guitar-library-autoscroll`):
+- Removida a função serverless `api/fetch-chords` e o campo de link/histórico. O app ficou 100% estático.
+- `utils/importers/`:
+  - `layout.js`: reconstrói a cifra pelas posições x/y dos trechos do PDF. A extração "em ordem" embaralha letra, títulos e acordes; pela posição, cada acorde volta para a coluna da sílaba. Lê título e artista pela fonte maior e descarta a página final de desenhos de acordes.
+  - `pdf.js`: pdf.js carregado só quando alguém abre um PDF.
+  - `cleanup.js`: tira cabeçalho (`Tom:`, `Afinação:`, `Composição de:`, `Capotraste na Nª casa`) e tablatura, troca tabs e espaço não separável; lê tom e capo.
+  - `chordpro.js`: converte ChordPro (`[C]Quando a [G]luz`, `{title:}`, `{capo:}`, `{soc}`) para acorde-sobre-letra.
+  - `index.js`: escolhe o formato pelo arquivo; `.txt` em ANSI (Windows-1252) é detectado.
+- Botões "Colar cifra" (área de transferência, com orientação se o navegador negar) e "Abrir arquivo" (`.txt`, ChordPro, PDF). Colar direto na caixa vazia também limpa o texto.
+- Cifra importada com capotraste abre com capo N + tom +N: o violão mostra os formatos do original e o piano toca o som real.
+- PWA: leitor de PDF (~1,7 MB) fora da instalação, com cache sob demanda; a instalação continua em ~458 KB.
+
+**Verificação**: lint, 214 testes e build passando. Com o PDF real do Cifra Club ("Espaço", Vitor Ramil), usado só localmente e fora do repositório: cifra idêntica ao PDF (alinhamento, estrofes), título/artista/tom lidos, página de desenhos descartada; aberta pelo botão no navegador e conferida na tela do Violão. Os testes do repositório usam uma letra de exemplo com a mesma estrutura do PDF.
+
+**Bugs achados no caminho**: no pdf.js 6 o documento não tem `destroy()` (agora `task.destroy()`); o ChordPro perdia o recuo da primeira linha de acordes.
+
+**Próximos passos**: excluir o projeto duplicado na Vercel; testar colar/abrir arquivo no celular.

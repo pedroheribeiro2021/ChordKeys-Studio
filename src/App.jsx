@@ -18,6 +18,7 @@ import { buildSong, buildSongFromLyrics, getSongBeats } from "./utils/songBuilde
 import { demoChords } from "./utils/songData";
 import { transposeChord } from "./utils/transpose";
 import { requestPersistence, saveSong } from "./utils/songStore";
+import { importFile, importText } from "./utils/importers";
 import {
   pauseSong,
   playSong,
@@ -26,23 +27,13 @@ import {
   stopSong,
 } from "./utils/audioEngine";
 
-const HISTORY_KEY = "history";
-
 const VIEWS = [
   { id: "estudio", label: "Estúdio" },
   { id: "violao", label: "Violão" },
   { id: "cifras", label: "Minhas cifras" },
 ];
 
-const EMPTY_META = { id: null, title: "", artist: "", sourceUrl: "" };
-
-const loadHistory = () => {
-  try {
-    return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-  } catch {
-    return [];
-  }
-};
+const EMPTY_META = { id: null, title: "", artist: "" };
 
 function App() {
   const [activeNotes, setActiveNotes] = useState([]);
@@ -52,10 +43,8 @@ function App() {
   const [beatsPerChord, setBeatsPerChord] = useState(2);
   const [playback, setPlayback] = useState("stopped"); // "playing" | "paused" | "stopped"
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [url, setUrl] = useState("");
   const [input, setInput] = useState("");
-  const [history, setHistory] = useState(loadHistory);
-  const [importError, setImportError] = useState(null);
+  const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [useInversion, setUseInversion] = useState(false);
 
@@ -145,13 +134,13 @@ function App() {
 
   const handleClear = () => {
     openSong({ text: "", meta: EMPTY_META });
-    setUrl("");
+    setImportMessage(null);
   };
 
   const handleOpenSaved = (song) => {
     openSong({
       text: song.text,
-      meta: { id: song.id, title: song.title, artist: song.artist, sourceUrl: song.sourceUrl },
+      meta: { id: song.id, title: song.title, artist: song.artist },
       transpose: song.transpose,
       capo: song.capo,
       simplify: song.simplify,
@@ -169,7 +158,7 @@ function App() {
       capo,
       simplify,
     });
-    setMeta({ id: saved.id, title: saved.title, artist: saved.artist, sourceUrl: saved.sourceUrl });
+    setMeta({ id: saved.id, title: saved.title, artist: saved.artist });
     requestPersistence().catch(() => {});
   };
 
@@ -183,25 +172,53 @@ function App() {
     }
   };
 
-  const handleFetchFromUrl = async () => {
-    setImportError(null);
+  // Cifra com capotraste já vem escrita nos formatos da mão: capo N + tom +N
+  // mostra os mesmos formatos no violão e toca o som real no piano
+  const openImported = ({ text, title, artist, capo: importedCapo }) => {
+    openSong({
+      text,
+      meta: { ...EMPTY_META, title, artist },
+      transpose: importedCapo,
+      capo: importedCapo,
+    });
+  };
+
+  const handlePasteText = (raw) => {
+    const result = importText(raw);
+    openImported(result);
+    setImportMessage(null);
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const raw = await navigator.clipboard.readText();
+      if (!raw.trim()) {
+        setImportMessage({ error: true, text: "A área de transferência está vazia." });
+        return;
+      }
+      handlePasteText(raw);
+    } catch {
+      setImportMessage({
+        error: true,
+        text: "O navegador não deixou ler a área de transferência. Toque e segure na caixa de texto abaixo e escolha Colar.",
+      });
+    }
+  };
+
+  const handleOpenFile = async (file) => {
+    setImportMessage(null);
     setIsImporting(true);
 
     try {
-      const res = await fetch(`/api/fetch-chords?url=${encodeURIComponent(url)}`);
-      const data = await res.json().catch(() => ({}));
+      const result = await importFile(file);
+      if (!result.text.trim()) throw new Error("Não encontrei uma cifra nesse arquivo.");
 
-      if (!res.ok || !data.text) {
-        throw new Error(data.error || "Não foi possível importar a cifra.");
-      }
-
-      openSong({ text: data.text, meta: { ...EMPTY_META, sourceUrl: url } });
-
-      const updated = [url, ...history.filter((u) => u !== url)].slice(0, 5);
-      setHistory(updated);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+      openImported(result);
+      setImportMessage({
+        text: `“${result.title || file.name}” aberta${result.capo ? ` (capotraste na ${result.capo}ª casa)` : ""}.`,
+      });
     } catch (error) {
-      setImportError(error.message);
+      setImportMessage({ error: true, text: error.message || "Não foi possível abrir o arquivo." });
     } finally {
       setIsImporting(false);
     }
@@ -274,12 +291,11 @@ function App() {
               <ChordInput
                 value={input}
                 onChange={setInput}
-                url={url}
-                onUrlChange={setUrl}
-                onImport={handleFetchFromUrl}
+                onPasteText={handlePasteText}
+                onPasteFromClipboard={handlePasteFromClipboard}
+                onOpenFile={handleOpenFile}
                 isImporting={isImporting}
-                importError={importError}
-                history={history}
+                importMessage={importMessage}
                 beatsPerChord={beatsPerChord}
                 onBeatsPerChordChange={setBeatsPerChord}
                 onClear={handleClear}
