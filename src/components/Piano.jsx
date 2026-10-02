@@ -2,7 +2,7 @@ import { useState } from "react";
 import Key from "./Key";
 import { playNotes } from "../utils/audioEngine";
 
-const octaves = [{ base: 3 }, { base: 4 }];
+const octaves = [3, 4];
 
 const whitePattern = ["C", "D", "E", "F", "G", "A", "B"];
 
@@ -31,40 +31,34 @@ export default function Piano({ activeNotes, onUserPlay }) {
     setTimeout(() => setPressed([]), 600);
   };
 
+  const isActive = (note) => activeNotes.includes(note) || pressed.includes(note);
+
   return (
-    <div style={styles.wrapper}>
-      <div style={styles.keyboard}>
+    // No celular as duas oitavas não cabem: o teclado rola na horizontal
+    <div className="piano-scroll">
+      <div className="piano">
         {octaves.map((octave) =>
           whitePattern.map((note) => {
-            const fullNote = `${note}${octave.base}`;
+            const fullNote = `${note}${octave}`;
             const sharp = blackPattern[note];
-            const sharpNote = sharp ? `${sharp}${octave.base}` : null;
+            const sharpNote = sharp ? `${sharp}${octave}` : null;
 
             return (
-              <div key={fullNote} style={styles.whiteKeyWrapper}>
-                {/* White key */}
+              <div key={fullNote} className="piano-slot">
                 <Key
                   note={fullNote}
                   isBlack={false}
-                  isActive={
-                    activeNotes.includes(fullNote) || pressed.includes(fullNote)
-                  }
+                  isActive={isActive(fullNote)}
                   onPlay={handlePlay}
                 />
 
-                {/* Black key */}
                 {sharpNote && (
-                  <div style={styles.blackKeyWrapper}>
-                    <Key
-                      note={sharpNote}
-                      isBlack={true}
-                      isActive={
-                        activeNotes.includes(sharpNote) ||
-                        pressed.includes(sharpNote)
-                      }
-                      onPlay={handlePlay}
-                    />
-                  </div>
+                  <Key
+                    note={sharpNote}
+                    isBlack={true}
+                    isActive={isActive(sharpNote)}
+                    onPlay={handlePlay}
+                  />
                 )}
               </div>
             );
@@ -74,28 +68,3 @@ export default function Piano({ activeNotes, onUserPlay }) {
     </div>
   );
 }
-
-const styles = {
-  wrapper: {
-    display: "flex",
-    justifyContent: "center",
-    marginTop: "30px",
-  },
-  keyboard: {
-    display: "flex",
-    position: "relative",
-    background: "#222",
-    padding: "10px",
-    borderRadius: "10px",
-  },
-  whiteKeyWrapper: {
-    position: "relative",
-    width: "50px",
-  },
-  blackKeyWrapper: {
-    position: "absolute",
-    top: 0,
-    right: "-15px",
-    zIndex: 10,
-  },
-};

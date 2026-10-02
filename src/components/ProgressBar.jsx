@@ -18,28 +18,14 @@ export default function ProgressBar({ isPlaying }) {
   }, [isPlaying]);
 
   return (
-    <div style={styles.container}>
-      <div
-        style={{
-          ...styles.bar,
-          width: `${progress}%`,
-        }}
-      />
+    <div
+      className="progress"
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(progress)}
+    >
+      <div className="progress-bar" style={{ width: `${progress}%` }} />
     </div>
   );
 }
-
-const styles = {
-  container: {
-    width: "100%",
-    height: "10px",
-    background: "#444",
-    borderRadius: "5px",
-    marginTop: "10px",
-    overflow: "hidden",
-  },
-  bar: {
-    height: "100%",
-    background: "#ff4d4f",
-  },
-};

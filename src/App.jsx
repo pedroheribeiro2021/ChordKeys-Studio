@@ -43,6 +43,7 @@ function App() {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState(loadHistory);
   const [importError, setImportError] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
   const [useInversion, setUseInversion] = useState(false);
 
   // O andamento é lido pelo Transport, então mudar o BPM afeta a música tocando
@@ -71,30 +72,31 @@ function App() {
     });
   };
 
-  const handlePlayInput = () => {
-    const parsed = parseLyricsWithChords(input);
-    const song =
-      parsed.length > 0
-        ? buildSongFromLyrics(parsed, beatsPerChord)
-        : buildSong(parseChords(input), beatsPerChord);
+  // Sem cifra digitada, toca a progressão de exemplo
+  const buildSongFromInput = () => {
+    if (!input.trim()) return buildSong(demoChords, beatsPerChord);
 
-    if (song.length > 0) startSong(song);
+    const parsed = parseLyricsWithChords(input);
+    return parsed.length > 0
+      ? buildSongFromLyrics(parsed, beatsPerChord)
+      : buildSong(parseChords(input), beatsPerChord);
   };
 
-  const handlePlayDemo = () => {
+  const handlePlayPause = () => {
+    if (playback === "playing") {
+      pauseSong();
+      setPlayback("paused");
+      return;
+    }
+
     if (playback === "paused") {
       resumeSong();
       setPlayback("playing");
       return;
     }
 
-    startSong(buildSong(demoChords, beatsPerChord));
-  };
-
-  const handlePause = () => {
-    if (playback !== "playing") return;
-    pauseSong();
-    setPlayback("paused");
+    const song = buildSongFromInput();
+    if (song.length > 0) startSong(song);
   };
 
   const handleStop = () => {
@@ -110,7 +112,7 @@ function App() {
     setUrl("");
   };
 
-  // Lógica para capturar notas tocadas pelo usuário
+  // Modo aprendizado: avança quando o acorde certo é tocado no teclado
   const handleUserPlay = (notes) => {
     const current = currentSong[currentIndex];
     if (!current) return;
@@ -122,6 +124,7 @@ function App() {
 
   const handleFetchFromUrl = async () => {
     setImportError(null);
+    setIsImporting(true);
 
     try {
       const res = await fetch(`/api/fetch-chords?url=${encodeURIComponent(url)}`);
@@ -131,6 +134,7 @@ function App() {
         throw new Error(data.error || "Não foi possível importar a cifra.");
       }
 
+      handleStop();
       setInput(data.text);
 
       const updated = [url, ...history.filter((u) => u !== url)].slice(0, 5);
@@ -138,113 +142,94 @@ function App() {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
     } catch (error) {
       setImportError(error.message);
+    } finally {
+      setIsImporting(false);
     }
-  };
-
-  const styles = {
-    app: {
-      maxWidth: "900px",
-      margin: "0 auto",
-      padding: "16px",
-    },
-    karaoke: {
-      textAlign: "center",
-      margin: "10px 0",
-      fontSize: "18px",
-      fontWeight: "bold",
-      color: "#ff4d4f",
-      minHeight: "24px",
-    },
   };
 
   return (
     <>
-      <div style={styles.app}>
+      <header className="app-header">
         <h1>ChordKeys Studio</h1>
+        <p>Veja e ouça os acordes de qualquer cifra.</p>
+      </header>
 
-        <p>Transpose: {transpose}</p>
+      <main className="layout">
+        <section className="card area-now" aria-labelledby="now-title">
+          <div className="card-header">
+            <h2 className="card-title" id="now-title">
+              Tocando
+            </h2>
+          </div>
+          <div className="karaoke" aria-live="polite">
+            {currentSong[currentIndex]?.lyric}
+          </div>
+          <Timeline song={currentSong} currentIndex={currentIndex} />
+          <ProgressBar isPlaying={playback === "playing"} />
+        </section>
 
-        <button onClick={() => setTranspose(transpose + 1)}>+1</button>
-        <button onClick={() => setTranspose(transpose - 1)}>-1</button>
-
-        <div style={{ marginTop: "20px" }}>
-          <h3>Controls</h3>
-
-          <label>BPM:</label>
-          <input
-            type="number"
-            value={bpm}
-            onChange={(e) => setBpm(Number(e.target.value))}
-            style={{ width: "60px", marginLeft: "10px" }}
+        <section className="card area-song" aria-labelledby="song-title">
+          <div className="card-header">
+            <h2 className="card-title" id="song-title">
+              Cifra
+            </h2>
+          </div>
+          <ChordInput
+            value={input}
+            onChange={setInput}
+            url={url}
+            onUrlChange={setUrl}
+            onImport={handleFetchFromUrl}
+            isImporting={isImporting}
+            importError={importError}
+            history={history}
+            beatsPerChord={beatsPerChord}
+            onBeatsPerChordChange={setBeatsPerChord}
+            onClear={handleClear}
           />
+        </section>
 
-          <input
-            type="range"
-            min="60"
-            max="180"
-            value={bpm}
-            onChange={(e) => setBpm(Number(e.target.value))}
+        <section className="card area-chords" aria-labelledby="chords-title">
+          <div className="card-header">
+            <h2 className="card-title" id="chords-title">
+              Acordes da música
+            </h2>
+            <button
+              type="button"
+              className="btn btn-sm"
+              aria-pressed={useInversion}
+              onClick={() => setUseInversion((prev) => !prev)}
+            >
+              Inversão
+            </button>
+          </div>
+          <ChordDiagram
+            song={currentSong}
+            currentIndex={currentIndex}
+            useInversion={useInversion}
           />
+        </section>
 
-          <br />
+        <section className="card area-keys" aria-labelledby="keys-title">
+          <div className="card-header">
+            <h2 className="card-title" id="keys-title">
+              Teclado
+            </h2>
+          </div>
+          <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
+          <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
+        </section>
+      </main>
 
-          <label>Beats per chord: {beatsPerChord}</label>
-          <input
-            type="range"
-            min="1"
-            max="8"
-            step="1"
-            value={beatsPerChord}
-            onChange={(e) => setBeatsPerChord(Number(e.target.value))}
-          />
-        </div>
-
-        {/* Letra ativa com efeito karaokê */}
-        <div style={styles.karaoke}>{currentSong[currentIndex]?.lyric}</div>
-
-        <Timeline song={currentSong} currentIndex={currentIndex} />
-        <ProgressBar isPlaying={playback === "playing"} />
-        <button
-          onClick={() => setUseInversion((prev) => !prev)}
-          style={{ marginBottom: 8 }}
-        >
-          {useInversion ? "Inversion ON" : "Inversion OFF"}
-        </button>
-        <ChordDiagram
-          song={currentSong}
-          currentIndex={currentIndex}
-          useInversion={useInversion}
-        />
-        <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
-        <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
-        <Player
-          onPlay={handlePlayDemo}
-          onPause={handlePause}
-          onStop={handleStop}
-        />
-
-        <ChordInput value={input} onChange={setInput} onPlay={handlePlayInput} />
-
-        <input
-          type="text"
-          placeholder="Paste song URL"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-
-        <button onClick={handleFetchFromUrl}>Import from URL</button>
-        <button onClick={handleClear}>Clear</button>
-
-        {importError && <p style={{ color: "#ff4d4f" }}>{importError}</p>}
-      </div>
-      <div>
-        <h4>Recent Songs</h4>
-        {history.map((h) => (
-          <button key={h} onClick={() => setUrl(h)}>
-            {h}
-          </button>
-        ))}
-      </div>
+      <Player
+        playback={playback}
+        onPlayPause={handlePlayPause}
+        onStop={handleStop}
+        transpose={transpose}
+        onTransposeChange={setTranspose}
+        bpm={bpm}
+        onBpmChange={setBpm}
+      />
     </>
   );
 }

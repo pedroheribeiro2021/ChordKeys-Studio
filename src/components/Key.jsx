@@ -1,20 +1,12 @@
 export default function Key({ note, isBlack, isActive, onPlay }) {
+  const classes = ["key", isBlack ? "key-black" : "key-white", isActive && "is-active"];
+
   return (
-    <div
+    <button
+      type="button"
+      className={classes.filter(Boolean).join(" ")}
+      aria-label={note}
       onClick={() => onPlay(note)}
-      style={{
-        width: isBlack ? "6vw" : "10vw",
-        maxWidth: isBlack ? "30px" : "50px",
-        height: isBlack ? "120px" : "200px",
-        background: isActive ? "#ff4d4f" : isBlack ? "#111" : "#fff",
-        border: isBlack ? "none" : "1px solid #ccc",
-        borderRadius: "6px",
-        boxShadow: isBlack
-          ? "0 4px 6px rgba(0,0,0,0.5)"
-          : "0 2px 4px rgba(0,0,0,0.2)",
-        cursor: "pointer",
-        transition: "all 0.1s ease",
-      }}
     />
   );
 }
