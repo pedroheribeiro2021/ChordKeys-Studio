@@ -465,6 +465,16 @@ input[type="range"] {
   cursor: pointer;
   touch-action: manipulation;
   transition: background 0.1s;
+  /* Segurar a tecla no celular não abre menu nem seleciona */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.piano-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 .key-white {
