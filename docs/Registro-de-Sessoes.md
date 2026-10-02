@@ -85,3 +85,15 @@
 **Bugs achados no caminho**: no pdf.js 6 o documento não tem `destroy()` (agora `task.destroy()`); o ChordPro perdia o recuo da primeira linha de acordes.
 
 **Próximos passos**: excluir o projeto duplicado na Vercel; testar colar/abrir arquivo no celular.
+
+## 2026-10-02 — Revisão da documentação
+
+**Objetivo**: conferir se a documentação refletia o estado real do projeto.
+
+**Achados e correções**:
+- `Pendencias.md` citava a rota `/api/fetch-chords` (removida no PR #28), tinha item duplicado e um `npm audit` desatualizado. Reescrito e reorganizado em: ação do Pedro, testes no celular, ideias e manutenção. `npm audit` atual: 0 vulnerabilidades nas dependências do app, 5 nas de desenvolvimento.
+- `README.md` tinha só duas linhas da fase "piano". Reescrito em inglês (portfólio): funcionalidades, stack, como rodar, estrutura e links para os ADRs.
+- Faltava ADR para a remoção do import por URL: criado `ADR/0002-importar-sem-servidor.md`.
+- A documentação nova só existe na branch `feat/file-import` até os PRs #26 → #27 → #28 serem mergeados.
+
+**Arquivos**: `README.md`, `docs/Pendencias.md`, `docs/ADR/0002-importar-sem-servidor.md`, este registro.

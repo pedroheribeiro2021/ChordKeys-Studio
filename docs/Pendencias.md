@@ -1,31 +1,30 @@
 # Pendências
 
-Atualizado em 2026-10-01. Itens concluídos saem daqui e vão para o `Registro-de-Sessoes.md`.
+Atualizado em 2026-10-02. Itens concluídos saem daqui e vão para o `Registro-de-Sessoes.md`.
 
-## Urgente
+## Ação do Pedro
 
-- [ ] **Vercel duplicada**: `chord-keys-studio` e `chord-keys-studio-staging` fazem deploy de produção da mesma branch `develop` (cada push gera dois builds iguais). Excluir o `chord-keys-studio-staging` pelo painel (a exclusão pelo Claude foi bloqueada pelas permissões). Avaliar também apontar a produção do `chord-keys-studio` para `main`.
+- [ ] **Mergear os PRs empilhados, nesta ordem: #26 → #27 → #28.** Antes de cada merge, trocar a base do PR para `develop`. Até lá, esta documentação só existe na branch `feat/file-import`; a `develop` ainda tem a versão de 01/10.
+- [ ] **Excluir o projeto `chord-keys-studio-staging` na Vercel** (Settings → Delete Project). Ele e o `chord-keys-studio` fazem deploy de produção da mesma `develop`, então cada push gera dois builds iguais. A exclusão pelo Claude foi bloqueada pelas permissões do Claude Code.
+- [ ] Decidir se a produção do `chord-keys-studio` deve seguir a `main` (hoje segue a `develop`).
 
-## Testar no celular
+## Testar no celular (não deu para verificar em navegador automatizado)
 
 - [ ] PWA instalado (Android e iPhone): instalação, ícone, modo offline.
-- [ ] Rolagem automática: velocidade, parar e parada no fim da cifra (no teste automatizado a janela do navegador estava oculta).
-- [ ] Wake Lock (tela não apagar durante a rolagem).
-- [ ] Botão "Colar cifra" no iPhone e no Android (permissão da área de transferência varia por navegador).
-- [ ] Abrir PDF offline depois de já ter aberto um PDF uma vez (cache sob demanda do leitor).
+- [ ] Rolagem automática: parar e parada no fim da cifra. A rolagem e a mudança de velocidade foram verificadas; o resto não, porque a janela do navegador de teste estava oculta.
+- [ ] Wake Lock: a tela não apaga durante a rolagem.
+- [ ] Botão "Colar cifra" no iPhone e no Android (a permissão da área de transferência varia por navegador).
+- [ ] Abrir PDF sem internet, depois de já ter aberto um PDF uma vez (cache sob demanda do leitor).
 
 ## Ideias para depois
 
 - [ ] Sincronizar cifras entre aparelhos (Supabase) — ver ADR 0001.
 - [ ] Editar a cifra direto na tela do Violão.
-- [ ] Acordes de violão com baixo invertido (`D/F#`, `Ebm7/Bb`) desenhados com o baixo; hoje o desenho ignora o baixo.
+- [ ] Desenhar acordes de violão com baixo invertido (`D/F#`, `Ebm7/Bb`); hoje o desenho ignora o baixo.
 - [ ] "Compartilhar com o ChordKeys" no Android (Web Share Target com arquivo exige tratar o POST no service worker).
 - [ ] Exportar cifra em ChordPro.
 
-## Outros
+## Manutenção
 
-- [ ] `npm audit` aponta 7 vulnerabilidades em dependências (1 baixa, 1 moderada, 5 altas). Avaliar.
-- [ ] Em `npm run dev` a rota `/api/fetch-chords` não existe (só no `vercel dev` ou em produção); a tela mostra o erro, mas vale documentar no README.
-- [ ] `Metronome`, `ChordDisplay` e `ChordMiniKeyboard` estão sem uso e ainda com estilos inline. Decidir se voltam (o metrônomo combina com a barra de reprodução) ou se saem do código.
-- [ ] Testar o PWA instalado num celular real (Android e iPhone): instalação, ícone, modo offline.
-- [ ] `main` local desatualizada em relação a `origin/main` (rodar `git fetch` e atualizar).
+- [ ] `npm audit`: 0 vulnerabilidades nas dependências do app; 5 nas de desenvolvimento (`nanoid` e `postcss`, via ferramentas de build). Não chegam ao app publicado; atualizar quando as ferramentas lançarem versão corrigida.
+- [ ] `Metronome`, `ChordDisplay` e `ChordMiniKeyboard` estão sem uso e ainda com estilos inline. Decidir se voltam (o metrônomo combinaria com a barra de reprodução) ou se saem do código.
