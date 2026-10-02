@@ -1,49 +1,39 @@
-export const parseLyricsWithChords = (text) => {
-  const lines = text.split("\n");
+import { isChord } from "./chordUtils";
 
+// Marcadores que aparecem em linhas de acorde e não são letra: [Intro], (2x), x2, |
+const MARKER_REGEX = /^(\[[^\]]*\]|\(?\d+x\)?|x\d+|\|+|\.\.\.?)$/i;
+
+const tokenize = (line) =>
+  [...line.matchAll(/\S+/g)].map((m) => ({ text: m[0], col: m.index }));
+
+export const isChordLine = (line) => {
+  const tokens = tokenize(line).filter((t) => !MARKER_REGEX.test(t.text));
+  if (tokens.length === 0) return false;
+
+  const chordCount = tokens.filter((t) => isChord(t.text)).length;
+  return chordCount > 0 && chordCount >= tokens.length * 0.6;
+};
+
+// Converte uma cifra (linha de acordes sobre linha de letra) em blocos
+// { chords: [{ chord, col }], lyrics }. A coluna do acorde indica a sílaba onde ele entra.
+export const parseLyricsWithChords = (text) => {
+  const lines = text.split(/\r?\n/);
   const result = [];
 
-  const chordRegex = /^[A-G](#|b)?(m|maj|min|dim|aug|sus)?\d*$/;
-
-  const isChordLine = (line) => {
-    const tokens = line.trim().split(/\s+/);
-
-    if (tokens.length === 0) return false;
-
-    // conta quantos tokens são acordes válidos
-    const chordCount = tokens.filter((token) => chordRegex.test(token)).length;
-
-    // ignorar linhas com palavras longas (provavelmente letra)
-    const hasLongWord = tokens.some((t) => t.length > 5);
-    if (hasLongWord) return false;
-
-    // 🔥 regra principal:
-    return chordCount > 0 && chordCount >= tokens.length * 0.6;
-  };
-
   for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-    const line = rawLine.trim();
+    const line = lines[i];
+    if (!line.trim() || !isChordLine(line)) continue;
 
-    if (!line) continue;
+    const chords = tokenize(line)
+      .filter((t) => isChord(t.text))
+      .map((t) => ({ chord: t.text, col: t.col }));
 
-    if (isChordLine(line)) {
-      // separa acordes colados (tipo C#mC#m)
-      const cleaned = line.replace(
-        /([A-G](#|b)?(m|maj|min|dim|aug|sus)?\d*)/g,
-        "$1 ",
-      );
-      const chords = cleaned.trim().split(/\s+/);
+    const next = lines[i + 1] ?? "";
+    const hasLyrics = next.trim() !== "" && !isChordLine(next);
 
-      const lyrics = lines[i + 1] || "";
+    result.push({ chords, lyrics: hasLyrics ? next : "" });
 
-      result.push({
-        chords,
-        lyrics,
-      });
-
-      i++;
-    }
+    if (hasLyrics) i++;
   }
 
   return result;

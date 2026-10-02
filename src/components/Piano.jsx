@@ -35,7 +35,7 @@ export default function Piano({ activeNotes, onUserPlay }) {
     <div style={styles.wrapper}>
       <div style={styles.keyboard}>
         {octaves.map((octave) =>
-          whitePattern.map((note, index) => {
+          whitePattern.map((note) => {
             const fullNote = `${note}${octave.base}`;
             const sharp = blackPattern[note];
             const sharpNote = sharp ? `${sharp}${octave.base}` : null;

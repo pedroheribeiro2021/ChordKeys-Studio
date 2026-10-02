@@ -1,10 +1,8 @@
-const CHORD_REGEX =
-  /[A-G](#|b)?(m|maj7|7|º|dim|aug|sus2|sus4)?(\/[A-G](#|b)?)?/g;
+import { isChord } from "./chordUtils";
 
+// Lista simples de acordes: "C G Am F", "C - G - Am", "| C | G |"
 export const parseChords = (input) => {
   if (!input) return [];
 
-  const matches = input.match(CHORD_REGEX);
-
-  return matches ? matches : [];
+  return input.split(/[\s,|-]+/).filter((token) => token && isChord(token));
 };

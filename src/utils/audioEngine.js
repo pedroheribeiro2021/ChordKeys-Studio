@@ -1,12 +1,13 @@
-/* eslint-disable no-unused-vars */
 import * as Tone from "tone";
 import { getChordNotes } from "../utils/chordUtils";
 
 let synth;
-let isPlaying = false;
-let lastSong = null;
-let lastOnChordPlay = null;
-let lastSongData = null;
+let totalTicks = 0;
+
+const transport = () => Tone.getTransport();
+
+// Batidas → notação de ticks do Tone ("960i"), para que o BPM afete o andamento
+const beatsToTicks = (beats) => `${Math.round(beats * transport().PPQ)}i`;
 
 export const initAudio = async () => {
   if (!synth) {
@@ -15,7 +16,7 @@ export const initAudio = async () => {
   }
 };
 
-// 🔥 STRUM mantido
+// Toca as notas com um pequeno atraso entre elas, como uma batida de violão
 const playChordStrum = (notes, time) => {
   const strumDelay = 0.05;
 
@@ -24,57 +25,57 @@ const playChordStrum = (notes, time) => {
   });
 };
 
-// Função para tocar uma música
-export const playSong = async (song, onChordPlay) => {
+// song: [{ chord, beat }]. onChordPlay é chamado sincronizado com o áudio.
+export const playSong = async (song, { totalBeats, onChordPlay, onEnd } = {}) => {
   await initAudio();
 
-  Tone.Transport.stop();
-  Tone.Transport.cancel();
-  Tone.Transport.position = 0;
-
-  lastSong = song;
-  lastOnChordPlay = onChordPlay;
-  lastSongData = song;
+  stopSong();
 
   song.forEach((item, index) => {
-    Tone.Transport.schedule((time) => {
+    transport().schedule((time) => {
       const notes = getChordNotes(item.chord);
-
       playChordStrum(notes, time);
 
-      if (onChordPlay) {
-        onChordPlay(notes, item.chord, index);
-      }
-    }, item.time);
+      Tone.getDraw().schedule(() => onChordPlay?.(notes, item.chord, index), time);
+    }, beatsToTicks(item.beat));
   });
 
-  Tone.Transport.start();
-  isPlaying = true;
+  totalTicks = Math.round(totalBeats * transport().PPQ);
+
+  // O fim não pode passar pelo Draw: com a aba em segundo plano o Draw descarta
+  // eventos e a música nunca terminaria. setTimeout continua rodando.
+  transport().schedule((time) => {
+    const delayMs = Math.max(0, (time - Tone.now()) * 1000);
+    setTimeout(() => {
+      stopSong();
+      onEnd?.();
+    }, delayMs);
+  }, `${totalTicks}i`);
+
+  transport().start();
 };
 
-// Resume playback from current position
 export const resumeSong = () => {
-  if (!isPlaying && lastSongData) {
-    Tone.Transport.start();
-    isPlaying = true;
-  }
+  if (transport().state === "paused") transport().start();
 };
 
 export const pauseSong = () => {
-  Tone.Transport.pause();
-  isPlaying = false;
+  transport().pause();
 };
 
 export const stopSong = () => {
-  Tone.Transport.stop();
-  Tone.Transport.cancel();
-  Tone.Transport.position = 0;
-  isPlaying = false;
+  transport().stop();
+  transport().cancel();
+  transport().position = 0;
 };
 
 export const setBPM = (bpm) => {
-  Tone.Transport.bpm.value = bpm;
+  transport().bpm.value = bpm;
 };
+
+// Fração da música já tocada (0 a 1); respeita pausa e mudança de BPM
+export const getProgress = () =>
+  totalTicks > 0 ? Math.min(transport().ticks / totalTicks, 1) : 0;
 
 export const playNotes = async (notes) => {
   await initAudio();

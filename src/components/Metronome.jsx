@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Tone from "tone";
 
 export default function Metronome({ bpm, isPlaying }) {
   const [beat, setBeat] = useState(0);
-
-  // 🔊 som do metrônomo
-  const synth = new Tone.MembraneSynth().toDestination();
+  const synthRef = useRef(null);
 
   useEffect(() => {
-    if (!isPlaying) {
-      setBeat(0);
-      return;
-    }
+    if (!isPlaying) return;
+
+    // 🔊 som do metrônomo, criado uma vez só
+    synthRef.current ??= new Tone.MembraneSynth().toDestination();
+    const synth = synthRef.current;
 
     let currentBeat = 0;
 
@@ -33,6 +32,9 @@ export default function Metronome({ bpm, isPlaying }) {
     return () => clearInterval(interval);
   }, [bpm, isPlaying]);
 
+  // Parado, nenhum tempo fica aceso
+  const shownBeat = isPlaying ? beat : 0;
+
   return (
     <div style={styles.container}>
       {[1, 2, 3, 4].map((n) => (
@@ -41,12 +43,12 @@ export default function Metronome({ bpm, isPlaying }) {
           style={{
             ...styles.dot,
             background:
-              beat === n
+              shownBeat === n
                 ? n === 1
                   ? "#ff1f1f" // forte
                   : "#ff7875"
                 : "#444",
-            transform: beat === n ? "scale(1.3)" : "scale(1)",
+            transform: shownBeat === n ? "scale(1.3)" : "scale(1)",
           }}
         >
           {n}

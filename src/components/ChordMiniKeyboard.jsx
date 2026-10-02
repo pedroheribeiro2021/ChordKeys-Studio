@@ -5,22 +5,6 @@ export default function ChordMiniKeyboard({ chord, useInversion = false }) {
 
   const notes = getChordNotes(chord, useInversion);
 
-  // Mapeia notas para posições no teclado (oitava 4)
-  const notePositions = {
-    C4: 0,
-    "C#4": 0.5,
-    D4: 1,
-    "D#4": 1.5,
-    E4: 2,
-    F4: 3,
-    "F#4": 3.5,
-    G4: 4,
-    "G#4": 4.5,
-    A4: 5,
-    "A#4": 5.5,
-    B4: 6,
-  };
-
   // Normaliza as notas para remover o número da oitava
   const normalizeNote = (note) => {
     return note.replace(/[0-9]/g, "");
@@ -31,7 +15,7 @@ export default function ChordMiniKeyboard({ chord, useInversion = false }) {
       <div style={styles.label}>{chord}</div>
       <div style={styles.keyboard}>
         {/* Renderiza 7 teclas brancas */}
-        {["C", "D", "E", "F", "G", "A", "B"].map((note, index) => {
+        {["C", "D", "E", "F", "G", "A", "B"].map((note) => {
           const isActive = notes.some((n) => normalizeNote(n) === note);
           return (
             <div

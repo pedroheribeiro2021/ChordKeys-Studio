@@ -1,27 +1,21 @@
 import { useEffect, useState } from "react";
+import { getProgress } from "../utils/audioEngine";
 
-export default function ProgressBar({ duration, isPlaying }) {
+// Lê a posição real do Transport, então pausa e mudança de BPM ficam corretas
+export default function ProgressBar({ isPlaying }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    let frame;
 
-    setProgress(0);
+    const tick = () => {
+      setProgress(getProgress() * 100);
+      if (isPlaying) frame = requestAnimationFrame(tick);
+    };
 
-    const start = Date.now();
-
-    const interval = setInterval(() => {
-      const elapsed = (Date.now() - start) / 1000;
-
-      const value = Math.min((elapsed / duration) * 100, 100);
-
-      setProgress(value);
-
-      if (value >= 100) clearInterval(interval);
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, duration]);
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [isPlaying]);
 
   return (
     <div style={styles.container}>
@@ -47,6 +41,5 @@ const styles = {
   bar: {
     height: "100%",
     background: "#ff4d4f",
-    transition: "width 0.05s linear",
   },
 };

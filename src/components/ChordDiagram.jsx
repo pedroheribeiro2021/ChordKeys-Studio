@@ -62,18 +62,14 @@ export default function ChordDiagram({
   currentIndex,
   useInversion = false,
 }) {
-  if (!song || song.length === 0) return null;
+  // Extrai acordes únicos mantendo a ordem de aparição.
+  // Hooks precisam vir antes de qualquer return antecipado.
+  const uniqueChords = useMemo(
+    () => [...new Set((song ?? []).map((item) => item.chord))],
+    [song],
+  );
 
-  // Extrai acordes únicos mantendo a ordem de aparição
-  const uniqueChords = useMemo(() => {
-    const chords = [];
-    song.forEach((item) => {
-      if (!chords.includes(item.chord)) {
-        chords.push(item.chord);
-      }
-    });
-    return chords;
-  }, [song]);
+  if (uniqueChords.length === 0) return null;
 
   return (
     <div style={styles.container}>
