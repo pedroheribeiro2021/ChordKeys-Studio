@@ -1,15 +1,15 @@
 import { getChordNotes } from "../utils/chordUtils";
+import { useMemo } from "react";
 
 // Função para renderizar um mini teclado para um acorde
-const renderMiniChord = (chord, isActive = false) => {
+const renderMiniChord = (chord, isActive = false, useInversion = false) => {
   if (!chord) return null;
 
-  const notes = getChordNotes(chord);
+  const notes = getChordNotes(chord, useInversion);
 
-  // Normaliza as notas para a oitava 4
+  // Normaliza as notas para remover o número da oitava
   const normalizeNote = (note) => {
-    const base = note.replace(/[0-9]/g, "");
-    return base + "4";
+    return note.replace(/[0-9]/g, "");
   };
 
   return (
@@ -20,9 +20,7 @@ const renderMiniChord = (chord, isActive = false) => {
       <div style={styles.miniKeyboard}>
         {/* Teclas brancas */}
         {["C", "D", "E", "F", "G", "A", "B"].map((note) => {
-          const fullNote = note + "4";
-          const isActiveNote = notes.some((n) => normalizeNote(n) === fullNote);
-
+          const isActiveNote = notes.some((n) => normalizeNote(n) === note);
           return (
             <div
               key={note}
@@ -42,11 +40,7 @@ const renderMiniChord = (chord, isActive = false) => {
           { note: "G#", pos: 4.5 },
           { note: "A#", pos: 5.5 },
         ].map(({ note, pos }) => {
-          const sharpNote = note + "4";
-          const isActiveNote = notes.some(
-            (n) => normalizeNote(n) === sharpNote,
-          );
-
+          const isActiveNote = notes.some((n) => normalizeNote(n) === note);
           return (
             <div
               key={note}
@@ -63,16 +57,23 @@ const renderMiniChord = (chord, isActive = false) => {
   );
 };
 
-export default function ChordDiagram({ song, currentIndex }) {
+export default function ChordDiagram({
+  song,
+  currentIndex,
+  useInversion = false,
+}) {
   if (!song || song.length === 0) return null;
 
   // Extrai acordes únicos mantendo a ordem de aparição
-  const uniqueChords = [];
-  song.forEach((item) => {
-    if (!uniqueChords.includes(item.chord)) {
-      uniqueChords.push(item.chord);
-    }
-  });
+  const uniqueChords = useMemo(() => {
+    const chords = [];
+    song.forEach((item) => {
+      if (!chords.includes(item.chord)) {
+        chords.push(item.chord);
+      }
+    });
+    return chords;
+  }, [song]);
 
   return (
     <div style={styles.container}>
@@ -89,7 +90,7 @@ export default function ChordDiagram({ song, currentIndex }) {
                 borderWidth: isActive ? "2px" : "1px",
               }}
             >
-              {renderMiniChord(chord, isActive)}
+              {renderMiniChord(chord, isActive, useInversion)}
             </div>
           );
         })}

@@ -25,11 +25,19 @@ function App() {
   const [url, setUrl] = useState("");
   const [input, setInput] = useState("");
   const [history, setHistory] = useState([]);
+  const [useInversion, setUseInversion] = useState(false);
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("history") || "[]");
     setHistory(saved);
   }, []);
+
+  const handleClear = () => {
+    setCurrentSong([]);
+    setCurrentChord(null);
+    setInput("");
+    setUrl("");
+  };
 
   // Lógica para capturar notas tocadas pelo usuário
   const handleUserPlay = (notes) => {
@@ -79,104 +87,124 @@ function App() {
   };
 
   return (
-    <><div style={styles.app}>
-      <h1>ChordKeys Studio</h1>
+    <>
+      <div style={styles.app}>
+        <h1>ChordKeys Studio</h1>
 
-      <p>Transpose: {transpose}</p>
+        <p>Transpose: {transpose}</p>
 
-      <button onClick={() => setTranspose(transpose + 1)}>+1</button>
-      <button onClick={() => setTranspose(transpose - 1)}>-1</button>
+        <button onClick={() => setTranspose(transpose + 1)}>+1</button>
+        <button onClick={() => setTranspose(transpose - 1)}>-1</button>
 
-      <div style={{ marginTop: "20px" }}>
-        <h3>Controls</h3>
+        <div style={{ marginTop: "20px" }}>
+          <h3>Controls</h3>
 
-        <label>BPM:</label>
+          <label>BPM:</label>
+          <input
+            type="number"
+            value={bpm}
+            onChange={(e) => setBpm(Number(e.target.value))}
+            style={{ width: "60px", marginLeft: "10px" }}
+          />
+
+          <input
+            type="range"
+            min="60"
+            max="180"
+            value={bpm}
+            onChange={(e) => setBpm(Number(e.target.value))}
+          />
+
+          <br />
+
+          <label>Chord Duration: {duration}</label>
+          <input
+            type="range"
+            min="0.5"
+            max="2"
+            step="0.5"
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+          />
+        </div>
+
+        {/* Letra ativa com efeito karaokê */}
+        <div
+          style={{
+            textAlign: "center",
+            margin: "10px 0",
+            fontSize: "18px",
+            fontWeight: "bold",
+            color: "#ff4d4f",
+            minHeight: "24px",
+          }}
+        >
+          {currentSong[currentIndex]?.lyric}
+        </div>
+
+        <Timeline song={currentSong} currentIndex={currentIndex} />
+        <ProgressBar duration={songDuration} isPlaying={isPlaying} />
+        <button
+          onClick={() => setUseInversion((prev) => !prev)}
+          style={{ marginBottom: 8 }}
+        >
+          {useInversion ? "Inversion ON" : "Inversion OFF"}
+        </button>
+        <ChordDiagram
+          song={currentSong}
+          currentIndex={currentIndex}
+          useInversion={useInversion}
+        />
+        {/* <ChordMiniKeyboard chord={currentChord} useInversion={useInversion} /> */}
+        {/* <Metronome bpm={bpm} isPlaying={isPlaying} /> */}
+        {/* <ChordDisplay currentChord={currentChord} /> */}
+        <div style={styles.karaoke}>{currentSong[currentIndex]?.lyric}</div>
+        <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
+        <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
+        <Player
+          setActiveNotes={setActiveNotes}
+          setCurrentChord={setCurrentChord}
+          setCurrentSong={setCurrentSong}
+          transpose={transpose}
+          bpm={bpm}
+          setIsPlaying={setIsPlaying}
+          setSongDuration={setSongDuration}
+          duration={duration}
+          setCurrentIndex={setCurrentIndex}
+        />
+
+        <ChordInput
+          setActiveNotes={setActiveNotes}
+          setCurrentChord={setCurrentChord}
+          setCurrentSong={setCurrentSong}
+          transpose={transpose}
+          bpm={bpm}
+          duration={duration}
+          setIsPlaying={setIsPlaying}
+          setSongDuration={setSongDuration}
+          setCurrentIndex={setCurrentIndex}
+          externalInput={input}
+        />
+
         <input
-          type="number"
-          value={bpm}
-          onChange={(e) => setBpm(Number(e.target.value))}
-          style={{ width: "60px", marginLeft: "10px" }} />
+          type="text"
+          placeholder="Paste song URL"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
 
-        <input
-          type="range"
-          min="60"
-          max="180"
-          value={bpm}
-          onChange={(e) => setBpm(Number(e.target.value))} />
-
-        <br />
-
-        <label>Chord Duration: {duration}</label>
-        <input
-          type="range"
-          min="0.5"
-          max="2"
-          step="0.5"
-          value={duration}
-          onChange={(e) => setDuration(Number(e.target.value))} />
+        <button onClick={handleFetchFromUrl}>Import from URL</button>
+        <button onClick={handleClear}>Clear</button>
       </div>
-
-      {/* Letra ativa com efeito karaokê */}
-      <div
-        style={{
-          textAlign: "center",
-          margin: "10px 0",
-          fontSize: "18px",
-          fontWeight: "bold",
-          color: "#ff4d4f",
-          minHeight: "24px",
-        }}
-      >
-        {currentSong[currentIndex]?.lyric}
-      </div>
-
-      <Timeline song={currentSong} currentIndex={currentIndex} />
-      <ProgressBar duration={songDuration} isPlaying={isPlaying} />
-      <ChordDiagram song={currentSong} currentIndex={currentIndex} />
-      {/* <ChordMiniKeyboard chord={currentChord} /> */}
-      {/* <Metronome bpm={bpm} isPlaying={isPlaying} /> */}
-      {/* <ChordDisplay currentChord={currentChord} /> */}
-      <div style={styles.karaoke}>{currentSong[currentIndex]?.lyric}</div>
-      <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
-      <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
-      <Player
-        setActiveNotes={setActiveNotes}
-        setCurrentChord={setCurrentChord}
-        setCurrentSong={setCurrentSong}
-        transpose={transpose}
-        bpm={bpm}
-        setIsPlaying={setIsPlaying}
-        setSongDuration={setSongDuration}
-        duration={duration}
-        setCurrentIndex={setCurrentIndex} />
-
-      <ChordInput
-        setActiveNotes={setActiveNotes}
-        setCurrentChord={setCurrentChord}
-        setCurrentSong={setCurrentSong}
-        transpose={transpose}
-        bpm={bpm}
-        duration={duration}
-        setIsPlaying={setIsPlaying}
-        setSongDuration={setSongDuration}
-        setCurrentIndex={setCurrentIndex}
-        externalInput={input} />
-
-      <input
-        type="text"
-        placeholder="Paste song URL"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)} />
-
-      <button onClick={handleFetchFromUrl}>Import from URL</button>
-    </div><div>
+      <div>
         <h4>Recent Songs</h4>
         {history.map((h, i) => (
           <button key={i} onClick={() => setUrl(h)}>
             {h}
           </button>
         ))}
-      </div></>
+      </div>
+    </>
   );
 }
 

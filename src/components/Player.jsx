@@ -1,6 +1,14 @@
-import { playSong, stopSong, setBPM } from "../utils/audioEngine";
+import {
+  playSong,
+  stopSong,
+  pauseSong,
+  setBPM,
+  resumeSong,
+} from "../utils/audioEngine";
+
 import { song } from "../utils/songData";
 import { transposeChord } from "../utils/transpose";
+import { useState } from "react";
 
 export default function Player({
   setActiveNotes,
@@ -13,8 +21,15 @@ export default function Player({
   duration,
   setCurrentIndex,
 }) {
+  const [wasPaused, setWasPaused] = useState(false);
   const handlePlay = () => {
     setBPM(bpm);
+    if (wasPaused) {
+      resumeSong();
+      setIsPlaying(true);
+      setWasPaused(false);
+      return;
+    }
 
     const transposedSong = song.map((item) => ({
       ...item,
@@ -23,7 +38,6 @@ export default function Player({
 
     setCurrentSong(transposedSong);
 
-    // Calcular duração total da música
     const songDuration = transposedSong.length * duration;
     setSongDuration(songDuration);
 
@@ -37,19 +51,28 @@ export default function Player({
       setTimeout(() => setActiveNotes([]), 500);
     });
 
-    // Parar quando terminar
     setTimeout(() => setIsPlaying(false), songDuration * 1000);
+  };
+
+  const handlePause = () => {
+    pauseSong();
+    setIsPlaying(false);
+    setWasPaused(true);
+  };
+
+  const handleStop = () => {
+    stopSong();
+    setIsPlaying(false);
+    setCurrentIndex(0);
   };
 
   return (
     <div style={{ marginTop: "20px" }}>
       <h3>Player</h3>
 
-      <button onClick={handlePlay} style={{ marginRight: "10px" }}>
-        Play
-      </button>
-
-      <button onClick={stopSong}>Stop</button>
+      <button onClick={handlePlay}>Play</button>
+      <button onClick={handlePause}>Pause</button>
+      <button onClick={handleStop}>Stop</button>
     </div>
   );
 }

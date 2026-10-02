@@ -1,23 +1,30 @@
+/* eslint-disable no-unused-vars */
 import * as Tone from "tone";
 import { getChordNotes } from "../utils/chordUtils";
 
 let synth;
+let isPlaying = false;
+let lastSong = null;
+let lastOnChordPlay = null;
+let lastSongData = null;
 
 export const initAudio = async () => {
-  await Tone.start();
-
-  synth = new Tone.PolySynth(Tone.Synth).toDestination();
+  if (!synth) {
+    await Tone.start();
+    synth = new Tone.PolySynth(Tone.Synth).toDestination();
+  }
 };
 
-// 🔥 NOVA FUNÇÃO DE STRUM
+// 🔥 STRUM mantido
 const playChordStrum = (notes, time) => {
-  const strumDelay = 0.05; // 50ms entre notas
+  const strumDelay = 0.05;
 
   notes.forEach((note, index) => {
     synth.triggerAttackRelease(note, "2n", time + index * strumDelay);
   });
 };
 
+// Função para tocar uma música
 export const playSong = async (song, onChordPlay) => {
   await initAudio();
 
@@ -25,11 +32,14 @@ export const playSong = async (song, onChordPlay) => {
   Tone.Transport.cancel();
   Tone.Transport.position = 0;
 
+  lastSong = song;
+  lastOnChordPlay = onChordPlay;
+  lastSongData = song;
+
   song.forEach((item, index) => {
     Tone.Transport.schedule((time) => {
       const notes = getChordNotes(item.chord);
 
-      // 🔥 AQUI TROCA
       playChordStrum(notes, time);
 
       if (onChordPlay) {
@@ -39,12 +49,27 @@ export const playSong = async (song, onChordPlay) => {
   });
 
   Tone.Transport.start();
+  isPlaying = true;
+};
+
+// Resume playback from current position
+export const resumeSong = () => {
+  if (!isPlaying && lastSongData) {
+    Tone.Transport.start();
+    isPlaying = true;
+  }
+};
+
+export const pauseSong = () => {
+  Tone.Transport.pause();
+  isPlaying = false;
 };
 
 export const stopSong = () => {
   Tone.Transport.stop();
   Tone.Transport.cancel();
   Tone.Transport.position = 0;
+  isPlaying = false;
 };
 
 export const setBPM = (bpm) => {
