@@ -85,9 +85,45 @@ textarea {
   letter-spacing: -0.3px;
 }
 
-.app-header p {
+/* Abas entre as telas */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 4px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+}
+
+.tab {
+  flex: 1;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tab[aria-current="page"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (min-width: 900px) {
+  .tabs {
+    max-width: 420px;
+  }
 }
 
 .layout {
@@ -133,8 +169,13 @@ textarea {
   margin-top: 8px;
 }
 
+/* Telas de uma coluna (Violão, Minhas cifras): alinhadas ao cabeçalho */
+.layout-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 @media (min-width: 900px) {
-  .layout {
+  .layout:not(.layout-single) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     /* a linha do meio absorve a altura da cifra; "Acordes" encosta em "Tocando" */
     grid-template-rows: auto 1fr auto;
@@ -272,26 +313,6 @@ input[type="range"] {
   accent-color: var(--accent);
   width: 100%;
   min-height: 32px;
-}
-
-/* ---------- Histórico ---------- */
-
-.history {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
-}
-
-.history .btn {
-  flex: none;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: block;
-  line-height: 34px;
 }
 
 /* ---------- Tocando agora ---------- */
@@ -512,13 +533,24 @@ input[type="range"] {
 
 .transpose {
   margin-left: auto;
+}
+
+/* Grupo − valor + que nunca quebra linha */
+.stepper,
+.transpose {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+}
+
+.stepper .btn-icon,
+.transpose .btn-icon {
+  width: 40px;
 }
 
 .transpose-value {
-  min-width: 52px;
+  min-width: 48px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-size: 14px;
@@ -548,4 +580,185 @@ input[type="range"] {
   .transport-main {
     order: 0;
   }
+}
+
+.btn-danger {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.hint {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  font-size: 14px;
+}
+
+/* ---------- Salvar ---------- */
+
+.save-form {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.card-header:has(.save-form) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ---------- Violão ---------- */
+
+.song-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.guitar-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.guitar-diagrams {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: 12px -14px -6px;
+  padding: 0 14px 6px;
+  scrollbar-width: thin;
+}
+
+.guitar-diagram {
+  flex: none;
+  margin: 0;
+  width: 84px;
+  text-align: center;
+}
+
+.guitar-diagram figcaption {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.guitar-diagram svg {
+  display: block;
+  width: 100%;
+}
+
+.gd-line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.gd-nut {
+  fill: var(--text);
+}
+
+.gd-dot {
+  fill: var(--text);
+}
+
+.gd-open {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 1.4;
+}
+
+.gd-mark,
+.gd-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+  text-anchor: middle;
+  font-family: var(--sans);
+}
+
+.gd-label {
+  text-anchor: start;
+}
+
+.sheet {
+  margin: 0;
+  font-family: var(--mono);
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.sheet-chord {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.sheet-info {
+  margin-bottom: 8px;
+}
+
+/* ---------- Minhas cifras ---------- */
+
+.song-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.song-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.song-item:first-child {
+  border-top: none;
+}
+
+.song-open {
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 8px 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  display: grid;
+}
+
+.song-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.song-item-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backup-text {
+  margin: 8px 0 12px;
 }

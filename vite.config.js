@@ -28,8 +28,16 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // A importação por URL precisa de rede; nunca servir o app no lugar da API
-        navigateFallbackDenylist: [/^\/api\//],
+        // O leitor de PDF (~1,7 MB) fica fora da instalação: é guardado na primeira
+        // vez que alguém abre um PDF e depois funciona offline.
+        globIgnores: ['**/pdf-*.js', '**/pdf.worker*'],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/pdf[-.].*\.m?js$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'pdf-reader' },
+          },
+        ],
       },
     }),
   ],

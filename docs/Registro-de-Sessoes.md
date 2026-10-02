@@ -43,3 +43,75 @@
 **Verificação**: lint, 44 testes e build passando. No Chrome, a 390 px a página não tem rolagem horizontal; layout conferido em 390 px e 1080 px. No build de produção, o service worker ativa e o manifest carrega com os 3 ícones. Não testado num celular real nem instalado.
 
 **Próximos passos**: cifras salvas (IndexedDB + `persist()` + backup em JSON), módulo violão e rolagem automática.
+
+## 2026-10-02 — Cifras salvas, módulo violão e rolagem automática (PR 3)
+
+**Objetivo**: as três features pedidas pelo Pedro, sobre o layout mobile-first.
+
+**Alterações** (branch `feat/guitar-library-autoscroll`, criada a partir de `feat/mobile-first-layout`):
+- Três telas com abas e navegação por hash (`useHashView`): **Estúdio** (o app de antes), **Violão** e **Minhas cifras**. Sair do Estúdio para a música, porque a barra de reprodução só existe lá.
+- `utils/guitar.js`: qualidade do formato (`shapeQuality`), dicionário de acordes abertos + formatos com pestana (de Mi e de Lá) para qualquer fundamental, `simplifyChord` (C7M(9) → C, F#m7(b5) → F#m, D/F# → D) e `suggestCapo` (casa que deixa menos pestanas; no empate, a mais baixa).
+- `utils/sheet.js`: formata a cifra trocando os acordes (tom, capo, simplificar) sem desalinhar a letra.
+- `GuitarView`: título/artista, salvar, simplificar, capo com sugestão ("Capo na 3ª casa deixa 1 acorde com pestana (hoje: 6). Usar"), tamanho da letra, desenhos dos acordes em SVG e cifra com acordes destacados. Barra inferior com rolagem automática (velocidade 1–10, 4 px/s por nível) e tom. A rolagem mantém a tela acesa (Wake Lock) e para sozinha no fim.
+- `utils/songStore.js` + `Library`: cifras em IndexedDB com tom/capo/simplificar, lista alfabética, excluir com confirmação em dois toques, exportar/importar backup em JSON, aviso para instalar o app no iPhone (ADR 0001).
+- `SaveSong`: cifra nova pede título/artista; cifra já salva grava as alterações direto.
+
+**Verificação**: lint, 202 testes (inclui 120 que conferem que cada desenho de acorde soa as notas certas, para as 12 fundamentais × 10 qualidades) e build passando. No navegador (390 px e 900 px): Violão, sugestão e aplicação do capo, simplificação mantendo colunas, salvar → lista → reabrir com os ajustes restaurados. A rolagem anda e acelera com a velocidade; parar e o fim da cifra não puderam ser confirmados na tela, porque a janela do Chrome estava oculta e com os timers estrangulados.
+
+**Achados**: o Cifra Club bloqueia requisições de servidor (403 do Akamai), então o import por URL deve estar quebrado em produção. A Vercel tem dois projetos fazendo deploy da mesma branch. Ambos estão em `Pendencias.md`.
+
+**Decisões**: ADR 0001 (cifras só no aparelho). Desenhos de violão ignoram o baixo invertido. A simplificação reduz tudo a maior, menor ou diminuto.
+
+**Próximos passos**: excluir o projeto duplicado na Vercel, decidir o futuro do import e testar no celular.
+
+## 2026-10-02 — Importar por colar e por arquivo; fim do import por URL (PR 4)
+
+**Objetivo**: substituir o import por URL (bloqueado pelo Cifra Club) por formas que não dependem de buscar páginas de terceiros.
+
+**Alterações** (branch `feat/file-import`, criada a partir de `feat/guitar-library-autoscroll`):
+- Removida a função serverless `api/fetch-chords` e o campo de link/histórico. O app ficou 100% estático.
+- `utils/importers/`:
+  - `layout.js`: reconstrói a cifra pelas posições x/y dos trechos do PDF. A extração "em ordem" embaralha letra, títulos e acordes; pela posição, cada acorde volta para a coluna da sílaba. Lê título e artista pela fonte maior e descarta a página final de desenhos de acordes.
+  - `pdf.js`: pdf.js carregado só quando alguém abre um PDF.
+  - `cleanup.js`: tira cabeçalho (`Tom:`, `Afinação:`, `Composição de:`, `Capotraste na Nª casa`) e tablatura, troca tabs e espaço não separável; lê tom e capo.
+  - `chordpro.js`: converte ChordPro (`[C]Quando a [G]luz`, `{title:}`, `{capo:}`, `{soc}`) para acorde-sobre-letra.
+  - `index.js`: escolhe o formato pelo arquivo; `.txt` em ANSI (Windows-1252) é detectado.
+- Botões "Colar cifra" (área de transferência, com orientação se o navegador negar) e "Abrir arquivo" (`.txt`, ChordPro, PDF). Colar direto na caixa vazia também limpa o texto.
+- Cifra importada com capotraste abre com capo N + tom +N: o violão mostra os formatos do original e o piano toca o som real.
+- PWA: leitor de PDF (~1,7 MB) fora da instalação, com cache sob demanda; a instalação continua em ~458 KB.
+
+**Verificação**: lint, 214 testes e build passando. Com o PDF real do Cifra Club ("Espaço", Vitor Ramil), usado só localmente e fora do repositório: cifra idêntica ao PDF (alinhamento, estrofes), título/artista/tom lidos, página de desenhos descartada; aberta pelo botão no navegador e conferida na tela do Violão. Os testes do repositório usam uma letra de exemplo com a mesma estrutura do PDF.
+
+**Bugs achados no caminho**: no pdf.js 6 o documento não tem `destroy()` (agora `task.destroy()`); o ChordPro perdia o recuo da primeira linha de acordes.
+
+**Próximos passos**: excluir o projeto duplicado na Vercel; testar colar/abrir arquivo no celular.
+
+## 2026-10-02 — Revisão da documentação
+
+**Objetivo**: conferir se a documentação refletia o estado real do projeto.
+
+**Achados e correções**:
+- `Pendencias.md` citava a rota `/api/fetch-chords` (removida no PR #28), tinha item duplicado e um `npm audit` desatualizado. Reescrito e reorganizado em: ação do Pedro, testes no celular, ideias e manutenção. `npm audit` atual: 0 vulnerabilidades nas dependências do app, 5 nas de desenvolvimento.
+- `README.md` tinha só duas linhas da fase "piano". Reescrito em inglês (portfólio): funcionalidades, stack, como rodar, estrutura e links para os ADRs.
+- Faltava ADR para a remoção do import por URL: criado `ADR/0002-importar-sem-servidor.md`.
+- A documentação nova só existe na branch `feat/file-import` até os PRs #26 → #27 → #28 serem mergeados.
+
+**Arquivos**: `README.md`, `docs/Pendencias.md`, `docs/ADR/0002-importar-sem-servidor.md`, este registro.
+
+## 2026-10-02 — Recuperação dos PRs empilhados e sustain do teclado (PRs #29 e #30)
+
+**Problema**: o Pedro mergeou #26, #27 e #28, mas a produção continuava com o campo de link do Cifra Club e sem a aba Violão. Causa: #27 e #28 eram PRs empilhados, e foram mergeados nas branches de base (`feat/mobile-first-layout` e `feat/guitar-library-autoscroll`), não na `develop`. O GitHub só redireciona a base quando a branch de base é apagada depois do merge. Erro do Claude ao abrir PRs empilhados e dizer que o redirecionamento seria automático.
+
+**Correção**: PR #29 de `feat/file-import` → `develop`, com todo o conteúdo do #27 e do #28 mais o commit de documentação (merge testado sem conflitos). Regra registrada no vault (`Global/Fluxo-Git-AION.md`): não empilhar PRs.
+
+**Vercel**: o Pedro excluiu o projeto duplicado `chord-keys-studio-staging`.
+
+**Sustain (PR #30, branch `feat/piano-sustain` a partir da `develop`, independente do #29)**:
+- Teclas soam enquanto apertadas (`pointerdown`/`pointerup`, Enter/Espaço), em vez de duração fixa.
+- Botão "Sustain" (padrão desligado) funciona como o pedal; ao desligar, solta as notas que não estão apertadas.
+- Envelope de piano: ataque 5 ms, decaimento 2,5 s até o silêncio, release 0,35 s.
+- Com sustain, a voz de cada nota já silenciada é liberada após ~3 s (o PolySynth tem 32 vozes e descartaria notas novas).
+- Áudio destravado no primeiro `pointerup`/`keydown`: no celular, `pointerdown` não conta como gesto para liberar o áudio.
+- 6 testes com Tone.js simulado; verificado no navegador (tecla acende/apaga, botão alterna).
+
+**Próximos passos**: mergear #29 e #30; testar no celular.
