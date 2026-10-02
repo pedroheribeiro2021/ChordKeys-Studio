@@ -6,6 +6,10 @@ import ChordInput from "./components/ChordInput";
 import Timeline from "./components/Timeline";
 import ProgressBar from "./components/ProgressBar";
 import ChordDiagram from "./components/ChordDiagram";
+import GuitarView from "./components/GuitarView";
+import Library from "./components/Library";
+import SaveSong from "./components/SaveSong";
+import { useHashView } from "./hooks/useHashView";
 import { matchChord } from "./utils/chordMatcher";
 import { getChordNotes } from "./utils/chordUtils";
 import { parseChords } from "./utils/parser";
@@ -13,6 +17,7 @@ import { parseLyricsWithChords } from "./utils/lyricsParser";
 import { buildSong, buildSongFromLyrics, getSongBeats } from "./utils/songBuilder";
 import { demoChords } from "./utils/songData";
 import { transposeChord } from "./utils/transpose";
+import { requestPersistence, saveSong } from "./utils/songStore";
 import {
   pauseSong,
   playSong,
@@ -22,6 +27,14 @@ import {
 } from "./utils/audioEngine";
 
 const HISTORY_KEY = "history";
+
+const VIEWS = [
+  { id: "estudio", label: "Estúdio" },
+  { id: "violao", label: "Violão" },
+  { id: "cifras", label: "Minhas cifras" },
+];
+
+const EMPTY_META = { id: null, title: "", artist: "", sourceUrl: "" };
 
 const loadHistory = () => {
   try {
@@ -45,6 +58,11 @@ function App() {
   const [importError, setImportError] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [useInversion, setUseInversion] = useState(false);
+
+  // Cifra aberta (salva ou não) e ajustes de violão
+  const [meta, setMeta] = useState(EMPTY_META);
+  const [capo, setCapo] = useState(0);
+  const [simplify, setSimplify] = useState(false);
 
   // O andamento é lido pelo Transport, então mudar o BPM afeta a música tocando
   useEffect(() => {
@@ -105,11 +123,54 @@ function App() {
     setCurrentIndex(0);
   };
 
-  const handleClear = () => {
+  // A barra de reprodução só existe no Estúdio: ao sair dele, a música para
+  const [view, navigate] = useHashView(
+    VIEWS.map((v) => v.id),
+    "estudio",
+    (from) => {
+      if (from === "estudio") handleStop();
+    },
+  );
+
+  // Troca a cifra aberta: para a reprodução e zera o que era da cifra anterior
+  const openSong = ({ text, meta: nextMeta, transpose: t = 0, capo: c = 0, simplify: s = false }) => {
     handleStop();
     setCurrentSong([]);
-    setInput("");
+    setInput(text);
+    setMeta(nextMeta);
+    setTranspose(t);
+    setCapo(c);
+    setSimplify(s);
+  };
+
+  const handleClear = () => {
+    openSong({ text: "", meta: EMPTY_META });
     setUrl("");
+  };
+
+  const handleOpenSaved = (song) => {
+    openSong({
+      text: song.text,
+      meta: { id: song.id, title: song.title, artist: song.artist, sourceUrl: song.sourceUrl },
+      transpose: song.transpose,
+      capo: song.capo,
+      simplify: song.simplify,
+    });
+    navigate("violao");
+  };
+
+  const handleSave = async (fields) => {
+    const saved = await saveSong({
+      ...meta,
+      ...fields,
+      id: meta.id ?? undefined,
+      text: input,
+      transpose,
+      capo,
+      simplify,
+    });
+    setMeta({ id: saved.id, title: saved.title, artist: saved.artist, sourceUrl: saved.sourceUrl });
+    requestPersistence().catch(() => {});
   };
 
   // Modo aprendizado: avança quando o acorde certo é tocado no teclado
@@ -134,8 +195,7 @@ function App() {
         throw new Error(data.error || "Não foi possível importar a cifra.");
       }
 
-      handleStop();
-      setInput(data.text);
+      openSong({ text: data.text, meta: { ...EMPTY_META, sourceUrl: url } });
 
       const updated = [url, ...history.filter((u) => u !== url)].slice(0, 5);
       setHistory(updated);
@@ -151,85 +211,124 @@ function App() {
     <>
       <header className="app-header">
         <h1>ChordKeys Studio</h1>
-        <p>Veja e ouça os acordes de qualquer cifra.</p>
+        <nav className="tabs" aria-label="Telas">
+          {VIEWS.map((v) => (
+            <a
+              key={v.id}
+              href={`#/${v.id}`}
+              className="tab"
+              aria-current={view === v.id ? "page" : undefined}
+            >
+              {v.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
-      <main className="layout">
-        <section className="card area-now" aria-labelledby="now-title">
-          <div className="card-header">
-            <h2 className="card-title" id="now-title">
-              Tocando
-            </h2>
-          </div>
-          <div className="karaoke" aria-live="polite">
-            {currentSong[currentIndex]?.lyric}
-          </div>
-          <Timeline song={currentSong} currentIndex={currentIndex} />
-          <ProgressBar isPlaying={playback === "playing"} />
-        </section>
-
-        <section className="card area-song" aria-labelledby="song-title">
-          <div className="card-header">
-            <h2 className="card-title" id="song-title">
-              Cifra
-            </h2>
-          </div>
-          <ChordInput
-            value={input}
-            onChange={setInput}
-            url={url}
-            onUrlChange={setUrl}
-            onImport={handleFetchFromUrl}
-            isImporting={isImporting}
-            importError={importError}
-            history={history}
-            beatsPerChord={beatsPerChord}
-            onBeatsPerChordChange={setBeatsPerChord}
-            onClear={handleClear}
+      {view === "violao" && (
+        <main className="layout layout-single">
+          <GuitarView
+            text={input}
+            meta={meta}
+            onSave={handleSave}
+            transpose={transpose}
+            onTransposeChange={setTranspose}
+            capo={capo}
+            onCapoChange={setCapo}
+            simplify={simplify}
+            onSimplifyChange={setSimplify}
+            onGoTo={navigate}
           />
-        </section>
+        </main>
+      )}
 
-        <section className="card area-chords" aria-labelledby="chords-title">
-          <div className="card-header">
-            <h2 className="card-title" id="chords-title">
-              Acordes da música
-            </h2>
-            <button
-              type="button"
-              className="btn btn-sm"
-              aria-pressed={useInversion}
-              onClick={() => setUseInversion((prev) => !prev)}
-            >
-              Inversão
-            </button>
-          </div>
-          <ChordDiagram
-            song={currentSong}
-            currentIndex={currentIndex}
-            useInversion={useInversion}
+      {view === "cifras" && (
+        <main className="layout layout-single">
+          <Library onOpen={handleOpenSaved} />
+        </main>
+      )}
+
+      {view === "estudio" && (
+        <>
+          <main className="layout">
+            <section className="card area-now" aria-labelledby="now-title">
+              <div className="card-header">
+                <h2 className="card-title" id="now-title">
+                  Tocando
+                </h2>
+              </div>
+              <div className="karaoke" aria-live="polite">
+                {currentSong[currentIndex]?.lyric}
+              </div>
+              <Timeline song={currentSong} currentIndex={currentIndex} />
+              <ProgressBar isPlaying={playback === "playing"} />
+            </section>
+
+            <section className="card area-song" aria-labelledby="song-title">
+              <div className="card-header">
+                <h2 className="card-title" id="song-title">
+                  {meta.title ? `Cifra · ${meta.title}` : "Cifra"}
+                </h2>
+                <SaveSong meta={meta} onSave={handleSave} disabled={!input.trim()} />
+              </div>
+              <ChordInput
+                value={input}
+                onChange={setInput}
+                url={url}
+                onUrlChange={setUrl}
+                onImport={handleFetchFromUrl}
+                isImporting={isImporting}
+                importError={importError}
+                history={history}
+                beatsPerChord={beatsPerChord}
+                onBeatsPerChordChange={setBeatsPerChord}
+                onClear={handleClear}
+              />
+            </section>
+
+            <section className="card area-chords" aria-labelledby="chords-title">
+              <div className="card-header">
+                <h2 className="card-title" id="chords-title">
+                  Acordes da música
+                </h2>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  aria-pressed={useInversion}
+                  onClick={() => setUseInversion((prev) => !prev)}
+                >
+                  Inversão
+                </button>
+              </div>
+              <ChordDiagram
+                song={currentSong}
+                currentIndex={currentIndex}
+                useInversion={useInversion}
+              />
+            </section>
+
+            <section className="card area-keys" aria-labelledby="keys-title">
+              <div className="card-header">
+                <h2 className="card-title" id="keys-title">
+                  Teclado
+                </h2>
+              </div>
+              <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
+              <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
+            </section>
+          </main>
+
+          <Player
+            playback={playback}
+            onPlayPause={handlePlayPause}
+            onStop={handleStop}
+            transpose={transpose}
+            onTransposeChange={setTranspose}
+            bpm={bpm}
+            onBpmChange={setBpm}
           />
-        </section>
-
-        <section className="card area-keys" aria-labelledby="keys-title">
-          <div className="card-header">
-            <h2 className="card-title" id="keys-title">
-              Teclado
-            </h2>
-          </div>
-          <Piano activeNotes={activeNotes} onUserPlay={handleUserPlay} />
-          <Controls setActiveNotes={setActiveNotes} transpose={transpose} />
-        </section>
-      </main>
-
-      <Player
-        playback={playback}
-        onPlayPause={handlePlayPause}
-        onStop={handleStop}
-        transpose={transpose}
-        onTransposeChange={setTranspose}
-        bpm={bpm}
-        onBpmChange={setBpm}
-      />
+        </>
+      )}
     </>
   );
 }

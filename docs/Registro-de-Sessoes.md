@@ -43,3 +43,23 @@
 **Verificação**: lint, 44 testes e build passando. No Chrome, a 390 px a página não tem rolagem horizontal; layout conferido em 390 px e 1080 px. No build de produção, o service worker ativa e o manifest carrega com os 3 ícones. Não testado num celular real nem instalado.
 
 **Próximos passos**: cifras salvas (IndexedDB + `persist()` + backup em JSON), módulo violão e rolagem automática.
+
+## 2026-10-02 — Cifras salvas, módulo violão e rolagem automática (PR 3)
+
+**Objetivo**: as três features pedidas pelo Pedro, sobre o layout mobile-first.
+
+**Alterações** (branch `feat/guitar-library-autoscroll`, criada a partir de `feat/mobile-first-layout`):
+- Três telas com abas e navegação por hash (`useHashView`): **Estúdio** (o app de antes), **Violão** e **Minhas cifras**. Sair do Estúdio para a música, porque a barra de reprodução só existe lá.
+- `utils/guitar.js`: qualidade do formato (`shapeQuality`), dicionário de acordes abertos + formatos com pestana (de Mi e de Lá) para qualquer fundamental, `simplifyChord` (C7M(9) → C, F#m7(b5) → F#m, D/F# → D) e `suggestCapo` (casa que deixa menos pestanas; no empate, a mais baixa).
+- `utils/sheet.js`: formata a cifra trocando os acordes (tom, capo, simplificar) sem desalinhar a letra.
+- `GuitarView`: título/artista, salvar, simplificar, capo com sugestão ("Capo na 3ª casa deixa 1 acorde com pestana (hoje: 6). Usar"), tamanho da letra, desenhos dos acordes em SVG e cifra com acordes destacados. Barra inferior com rolagem automática (velocidade 1–10, 4 px/s por nível) e tom. A rolagem mantém a tela acesa (Wake Lock) e para sozinha no fim.
+- `utils/songStore.js` + `Library`: cifras em IndexedDB com tom/capo/simplificar, lista alfabética, excluir com confirmação em dois toques, exportar/importar backup em JSON, aviso para instalar o app no iPhone (ADR 0001).
+- `SaveSong`: cifra nova pede título/artista; cifra já salva grava as alterações direto.
+
+**Verificação**: lint, 202 testes (inclui 120 que conferem que cada desenho de acorde soa as notas certas, para as 12 fundamentais × 10 qualidades) e build passando. No navegador (390 px e 900 px): Violão, sugestão e aplicação do capo, simplificação mantendo colunas, salvar → lista → reabrir com os ajustes restaurados. A rolagem anda e acelera com a velocidade; parar e o fim da cifra não puderam ser confirmados na tela, porque a janela do Chrome estava oculta e com os timers estrangulados.
+
+**Achados**: o Cifra Club bloqueia requisições de servidor (403 do Akamai), então o import por URL deve estar quebrado em produção. A Vercel tem dois projetos fazendo deploy da mesma branch. Ambos estão em `Pendencias.md`.
+
+**Decisões**: ADR 0001 (cifras só no aparelho). Desenhos de violão ignoram o baixo invertido. A simplificação reduz tudo a maior, menor ou diminuto.
+
+**Próximos passos**: excluir o projeto duplicado na Vercel, decidir o futuro do import e testar no celular.
