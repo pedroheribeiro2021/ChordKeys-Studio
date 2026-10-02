@@ -1,61 +1,37 @@
 import { useEffect, useRef } from "react";
 
 export default function Timeline({ song, currentIndex }) {
+  const containerRef = useRef(null);
   const chordRefs = useRef([]);
 
+  // Rola só a faixa horizontal. scrollIntoView também rolaria a página inteira,
+  // o que no celular faz a tela pular a cada acorde.
   useEffect(() => {
-    if (chordRefs.current[currentIndex]) {
-      chordRefs.current[currentIndex].scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "center",
-      });
-    }
+    const container = containerRef.current;
+    const chord = chordRefs.current[currentIndex];
+    if (!container || !chord) return;
+
+    container.scrollTo({
+      left: chord.offsetLeft - container.clientWidth / 2 + chord.clientWidth / 2,
+      behavior: "smooth",
+    });
   }, [currentIndex]);
 
+  if (song.length === 0) {
+    return <p className="muted">Toque uma cifra para ver a sequência de acordes.</p>;
+  }
+
   return (
-    <div style={{ marginTop: "20px" }}>
-      <h3>Timeline</h3>
-
-      <div style={styles.container}>
-        {song.map((item, index) => {
-          const isActive = index === currentIndex;
-
-          return (
-            <div
-              key={index}
-              ref={(el) => (chordRefs.current[index] = el)}
-              style={{
-                ...styles.chord,
-                background: isActive ? "#ff4d4f" : "#eee",
-                color: isActive ? "white" : "black",
-                transform: isActive ? "scale(1.15)" : "scale(1)",
-                opacity: isActive ? 1 : 0.6,
-              }}
-            >
-              <div>{item.chord}</div>
-            </div>
-          );
-        })}
-      </div>
+    <div className="timeline" ref={containerRef}>
+      {song.map((item, index) => (
+        <div
+          key={index}
+          ref={(el) => (chordRefs.current[index] = el)}
+          className={`timeline-chord${index === currentIndex ? " is-active" : ""}`}
+        >
+          {item.chord}
+        </div>
+      ))}
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    gap: "10px",
-    overflowX: "auto",
-    padding: "10px",
-    scrollBehavior: "smooth",
-  },
-  chord: {
-    minWidth: "60px",
-    padding: "10px",
-    textAlign: "center",
-    borderRadius: "6px",
-    transition: "all 0.2s ease",
-    fontWeight: "bold",
-  },
-};

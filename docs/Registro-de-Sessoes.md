@@ -26,3 +26,20 @@
 - Módulo violão inclui as três partes: reduzir acordes, capotraste e desenhos dos acordes.
 
 **Próximos passos**: ver `Pendencias.md`. O próximo é o layout mobile-first.
+
+## 2026-10-01 — Layout mobile-first e PWA (PR 2)
+
+**Objetivo**: tornar o app usável no celular e instalável, como base para as cifras salvas.
+
+**Alterações** (branch `feat/mobile-first-layout`, criada a partir de `fix/core-playback-and-parsing`):
+- `index.css` reescrito, mobile-first: tokens de cor para tema claro e escuro, cartões, botões com área de toque de 44 px e respeito à área segura (`safe-area-inset`). A partir de 900 px vira duas colunas (cifra | tocando + acordes) com o teclado embaixo. Estilos inline trocados por classes.
+- Barra de reprodução fixa no rodapé: tocar/pausar num botão só, parar, tom −/+ e BPM. Tocar com a cifra vazia toca a progressão de exemplo.
+- Cartão "Cifra": link do Cifra Club (formulário, Enter importa, estado "Importando…"), histórico em faixa rolável, área de texto em fonte mono (preserva o alinhamento acorde/letra), batidas por acorde e Limpar.
+- Piano: teclas viram `<button>` (acessíveis por teclado) com largura fluida (`clamp`). No celular as duas oitavas rolam na horizontal, sem estourar a página.
+- Timeline: rola só a faixa horizontal. O `scrollIntoView` antigo também rolava a página inteira, e no celular a tela pulava a cada acorde.
+- Textos em português; estados vazios com orientação.
+- PWA com `vite-plugin-pwa`: manifest, service worker (offline, atualização automática, `/api` fora do fallback), ícone próprio (teclas de piano) em SVG + PNG 192/512, versão maskable e `apple-touch-icon`. Removidos `icons.svg` e o logo do Vite (sobras do template).
+
+**Verificação**: lint, 44 testes e build passando. No Chrome, a 390 px a página não tem rolagem horizontal; layout conferido em 390 px e 1080 px. No build de produção, o service worker ativa e o manifest carrega com os 3 ícones. Não testado num celular real nem instalado.
+
+**Próximos passos**: cifras salvas (IndexedDB + `persist()` + backup em JSON), módulo violão e rolagem automática.
