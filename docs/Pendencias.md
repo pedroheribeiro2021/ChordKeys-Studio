@@ -4,7 +4,6 @@ Atualizado em 2026-10-01. Itens concluídos saem daqui e vão para o `Registro-d
 
 ## Urgente
 
-- [ ] **Import do Cifra Club provavelmente quebrado em produção**: o Cifra Club responde 403 (Akamai, "Access Denied") a requisições fora de navegador, mesmo com User-Agent de navegador. Confirmar abrindo o import no app publicado. Não contornar a proteção anti-bot; caminho previsto: colar o texto (já funciona) e, se quiser, tirar o import ou trocar por outra fonte que permita acesso.
 - [ ] **Vercel duplicada**: `chord-keys-studio` e `chord-keys-studio-staging` fazem deploy de produção da mesma branch `develop` (cada push gera dois builds iguais). Excluir o `chord-keys-studio-staging` pelo painel (a exclusão pelo Claude foi bloqueada pelas permissões). Avaliar também apontar a produção do `chord-keys-studio` para `main`.
 
 ## Testar no celular
@@ -12,12 +11,16 @@ Atualizado em 2026-10-01. Itens concluídos saem daqui e vão para o `Registro-d
 - [ ] PWA instalado (Android e iPhone): instalação, ícone, modo offline.
 - [ ] Rolagem automática: velocidade, parar e parada no fim da cifra (no teste automatizado a janela do navegador estava oculta).
 - [ ] Wake Lock (tela não apagar durante a rolagem).
+- [ ] Botão "Colar cifra" no iPhone e no Android (permissão da área de transferência varia por navegador).
+- [ ] Abrir PDF offline depois de já ter aberto um PDF uma vez (cache sob demanda do leitor).
 
 ## Ideias para depois
 
 - [ ] Sincronizar cifras entre aparelhos (Supabase) — ver ADR 0001.
 - [ ] Editar a cifra direto na tela do Violão.
-- [ ] Acordes de violão com baixo invertido (`D/F#`) desenhados com o baixo; hoje o desenho ignora o baixo.
+- [ ] Acordes de violão com baixo invertido (`D/F#`, `Ebm7/Bb`) desenhados com o baixo; hoje o desenho ignora o baixo.
+- [ ] "Compartilhar com o ChordKeys" no Android (Web Share Target com arquivo exige tratar o POST no service worker).
+- [ ] Exportar cifra em ChordPro.
 
 ## Outros
 

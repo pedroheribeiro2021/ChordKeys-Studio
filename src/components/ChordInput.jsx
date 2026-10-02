@@ -1,4 +1,7 @@
-const PLACEHOLDER = `Cole a cifra ou só os acordes. Ex.:
+import { useRef } from "react";
+import { ACCEPTED_FILES } from "../utils/importers";
+
+const PLACEHOLDER = `Cole a cifra aqui ou abra um arquivo (.txt, .pdf, ChordPro). Ex.:
 
 C              G/B
 Quando a luz dos olhos meus
@@ -8,54 +11,53 @@ Vazio, o ▶ toca uma progressão de exemplo.`;
 export default function ChordInput({
   value,
   onChange,
-  url,
-  onUrlChange,
-  onImport,
+  onPasteText,
+  onPasteFromClipboard,
+  onOpenFile,
   isImporting,
-  importError,
-  history,
+  importMessage,
   beatsPerChord,
   onBeatsPerChordChange,
   onClear,
 }) {
-  const handleSubmit = (e) => {
+  const fileRef = useRef(null);
+
+  // Colar numa caixa vazia passa pela limpeza (cabeçalho, tablatura, tabs)
+  const handlePaste = (e) => {
+    if (value.trim()) return;
+    const text = e.clipboardData?.getData("text/plain");
+    if (!text) return;
     e.preventDefault();
-    if (url.trim()) onImport();
+    onPasteText(text);
+  };
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) onOpenFile(file);
   };
 
   return (
     <div className="stack">
-      <form className="row" onSubmit={handleSubmit}>
-        <input
-          className="input grow"
-          type="url"
-          inputMode="url"
-          placeholder="Link do Cifra Club"
-          aria-label="Link do Cifra Club"
-          value={url}
-          onChange={(e) => onUrlChange(e.target.value)}
-        />
-        <button type="submit" className="btn" disabled={isImporting || !url.trim()}>
-          {isImporting ? "Importando…" : "Importar"}
+      <div className="row">
+        <button type="button" className="btn" onClick={onPasteFromClipboard} disabled={isImporting}>
+          Colar cifra
         </button>
-      </form>
+        <button
+          type="button"
+          className="btn"
+          onClick={() => fileRef.current?.click()}
+          disabled={isImporting}
+        >
+          {isImporting ? "Abrindo…" : "Abrir arquivo"}
+        </button>
+        <input ref={fileRef} type="file" accept={ACCEPTED_FILES} hidden onChange={handleFile} />
+      </div>
 
-      {importError && <p className="error">{importError}</p>}
-
-      {history.length > 0 && (
-        <div className="history" aria-label="Importadas recentemente">
-          {history.map((h) => (
-            <button
-              key={h}
-              type="button"
-              className="btn btn-sm btn-ghost"
-              title={h}
-              onClick={() => onUrlChange(h)}
-            >
-              {h.replace(/^https?:\/\/(www\.)?cifraclub\.com\.br\//, "").replace(/\/$/, "")}
-            </button>
-          ))}
-        </div>
+      {importMessage && (
+        <p className={importMessage.error ? "error" : "muted"} role="status">
+          {importMessage.text}
+        </p>
       )}
 
       <textarea
@@ -64,6 +66,7 @@ export default function ChordInput({
         placeholder={PLACEHOLDER}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onPaste={handlePaste}
         rows={10}
         spellCheck={false}
       />
