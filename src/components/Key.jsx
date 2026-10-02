@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { playNotes } from "../utils/audioEngine";
-
 export default function Key({ note, isBlack, isActive, onPlay }) {
   return (
     <div

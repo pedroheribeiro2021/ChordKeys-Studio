@@ -2,7 +2,22 @@ import { playNotes } from "../utils/audioEngine";
 import { getChordNotes } from "../utils/chordUtils";
 import { transposeChord } from "../utils/transpose";
 
-const chords = ["C", "G", "Am", "F"];
+const chords = [
+  "C",
+  "Cm",
+  "D",
+  "Dm",
+  "E",
+  "Em",
+  "F",
+  "Fm",
+  "G",
+  "Gm",
+  "A",
+  "Am",
+  "B",
+  "Bm",
+];
 
 export default function Controls({ setActiveNotes, transpose }) {
   const handlePlayChord = (chord) => {
