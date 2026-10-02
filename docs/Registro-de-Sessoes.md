@@ -97,3 +97,21 @@
 - A documentação nova só existe na branch `feat/file-import` até os PRs #26 → #27 → #28 serem mergeados.
 
 **Arquivos**: `README.md`, `docs/Pendencias.md`, `docs/ADR/0002-importar-sem-servidor.md`, este registro.
+
+## 2026-10-02 — Recuperação dos PRs empilhados e sustain do teclado (PRs #29 e #30)
+
+**Problema**: o Pedro mergeou #26, #27 e #28, mas a produção continuava com o campo de link do Cifra Club e sem a aba Violão. Causa: #27 e #28 eram PRs empilhados, e foram mergeados nas branches de base (`feat/mobile-first-layout` e `feat/guitar-library-autoscroll`), não na `develop`. O GitHub só redireciona a base quando a branch de base é apagada depois do merge. Erro do Claude ao abrir PRs empilhados e dizer que o redirecionamento seria automático.
+
+**Correção**: PR #29 de `feat/file-import` → `develop`, com todo o conteúdo do #27 e do #28 mais o commit de documentação (merge testado sem conflitos). Regra registrada no vault (`Global/Fluxo-Git-AION.md`): não empilhar PRs.
+
+**Vercel**: o Pedro excluiu o projeto duplicado `chord-keys-studio-staging`.
+
+**Sustain (PR #30, branch `feat/piano-sustain` a partir da `develop`, independente do #29)**:
+- Teclas soam enquanto apertadas (`pointerdown`/`pointerup`, Enter/Espaço), em vez de duração fixa.
+- Botão "Sustain" (padrão desligado) funciona como o pedal; ao desligar, solta as notas que não estão apertadas.
+- Envelope de piano: ataque 5 ms, decaimento 2,5 s até o silêncio, release 0,35 s.
+- Com sustain, a voz de cada nota já silenciada é liberada após ~3 s (o PolySynth tem 32 vozes e descartaria notas novas).
+- Áudio destravado no primeiro `pointerup`/`keydown`: no celular, `pointerdown` não conta como gesto para liberar o áudio.
+- 6 testes com Tone.js simulado; verificado no navegador (tecla acende/apaga, botão alterna).
+
+**Próximos passos**: mergear #29 e #30; testar no celular.

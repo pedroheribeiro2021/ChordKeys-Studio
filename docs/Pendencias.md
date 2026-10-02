@@ -4,8 +4,7 @@ Atualizado em 2026-10-02. Itens concluídos saem daqui e vão para o `Registro-d
 
 ## Ação do Pedro
 
-- [ ] **Mergear os PRs empilhados, nesta ordem: #26 → #27 → #28.** Antes de cada merge, trocar a base do PR para `develop`. Até lá, esta documentação só existe na branch `feat/file-import`; a `develop` ainda tem a versão de 01/10.
-- [ ] **Excluir o projeto `chord-keys-studio-staging` na Vercel** (Settings → Delete Project). Ele e o `chord-keys-studio` fazem deploy de produção da mesma `develop`, então cada push gera dois builds iguais. A exclusão pelo Claude foi bloqueada pelas permissões do Claude Code.
+- [ ] **Mergear o #29** (violão, cifras salvas e import por arquivo → `develop`) e o **#30** (sustain do teclado). São independentes, sem conflito, em qualquer ordem. Depois do deploy, recarregar o app uma vez: o service worker do PWA pode servir a versão anterior na primeira abertura.
 - [ ] Decidir se a produção do `chord-keys-studio` deve seguir a `main` (hoje segue a `develop`).
 
 ## Testar no celular (não deu para verificar em navegador automatizado)
@@ -14,6 +13,7 @@ Atualizado em 2026-10-02. Itens concluídos saem daqui e vão para o `Registro-d
 - [ ] Rolagem automática: parar e parada no fim da cifra. A rolagem e a mudança de velocidade foram verificadas; o resto não, porque a janela do navegador de teste estava oculta.
 - [ ] Wake Lock: a tela não apaga durante a rolagem.
 - [ ] Botão "Colar cifra" no iPhone e no Android (a permissão da área de transferência varia por navegador).
+- [ ] Teclado: som ao segurar e soltar, sustain ligado/desligado, e a primeira tecla logo após abrir o app (PR #30).
 - [ ] Abrir PDF sem internet, depois de já ter aberto um PDF uma vez (cache sob demanda do leitor).
 
 ## Ideias para depois
