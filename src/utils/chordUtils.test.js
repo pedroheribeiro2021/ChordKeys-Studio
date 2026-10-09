@@ -8,6 +8,7 @@ describe("parseChord", () => {
     expect(parseChord("F#m7(b5)")).toEqual({ root: "F#", suffix: "m7(b5)", bass: null });
     expect(parseChord("D/F#")).toEqual({ root: "D", suffix: "", bass: "F#" });
     expect(parseChord("Bb7M")).toEqual({ root: "Bb", suffix: "7M", bass: null });
+    expect(parseChord("D6/9")).toEqual({ root: "D", suffix: "6/9", bass: null });
   });
 
   it("rejeita palavras comuns da letra", () => {
@@ -33,6 +34,7 @@ describe("getIntervals", () => {
     ["sus4", [0, 5, 7]],
     ["sus2", [0, 2, 7]],
     ["6", [0, 4, 7, 9]],
+    ["6/9", [0, 4, 7, 9, 14]],
     ["add9", [0, 4, 7, 14]],
     ["9", [0, 4, 7, 10, 14]],
     ["7(9)", [0, 4, 7, 10, 14]],

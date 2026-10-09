@@ -6,6 +6,8 @@ import {
   getSong,
   importBackup,
   listSongs,
+  listSyncRecords,
+  mergeSyncRecords,
   saveSong,
 } from "./songStore";
 
@@ -47,6 +49,28 @@ describe("songStore", () => {
     const song = await saveSong({ title: "X", text: "C" });
     await deleteSong(song.id);
     expect(await getSong(song.id)).toBeNull();
+    const tombstone = (await listSyncRecords()).find((record) => record.id === song.id);
+    expect(tombstone.deletedAt).toBeTruthy();
+    expect(tombstone.text).toBe("");
+    expect(await listSongs()).not.toContainEqual(expect.objectContaining({ id: song.id }));
+  });
+
+  it("mantém a exclusão ao sincronizar com uma versão antiga da nuvem", async () => {
+    const song = await saveSong({ title: "Remover", text: "C" });
+    await deleteSong(song.id);
+
+    const result = await mergeSyncRecords([{ ...song, updatedAt: "2000-01-01T00:00:00.000Z" }]);
+
+    expect(result.downloaded).toBe(0);
+    expect(await getSong(song.id)).toBeNull();
+  });
+
+  it("resolve conflitos com o mesmo horário de forma determinística", async () => {
+    const song = await saveSong({ title: "A local", text: "C" });
+    const remote = { ...song, title: "Z nuvem" };
+
+    expect(await mergeSyncRecords([remote])).toMatchObject({ downloaded: 1 });
+    expect((await listSongs()).find((item) => item.id === song.id).title).toBe("Z nuvem");
   });
 });
 
@@ -58,7 +82,7 @@ describe("backup", () => {
 
     for (const song of await listSongs()) await deleteSong(song.id);
 
-    expect(await importBackup(backup)).toEqual({ added: 2, updated: 0, skipped: 0 });
+    expect(await importBackup(backup)).toEqual({ added: 0, updated: 2, skipped: 0 });
     expect((await listSongs()).map((s) => s.title)).toEqual(["A", "B"]);
   });
 

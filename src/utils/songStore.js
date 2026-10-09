@@ -1,5 +1,4 @@
-// Cifras salvas no aparelho (IndexedDB). Sem servidor e sem login: o backup em JSON
-// é o jeito de levar as cifras para outro aparelho. Ver docs/ADR/0001.
+// IndexedDB is the offline copy; Firebase sync is layered on top of this store.
 
 const DB_NAME = "chordkeys";
 const STORE = "songs";
@@ -36,43 +35,108 @@ const withStore = async (mode, fn) => {
 const newId = () =>
   globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-// song: { id?, title, artist, text, transpose, capo, simplify }
+const nextUpdatedAt = (previous) => {
+  const now = Date.now();
+  const previousTime = Date.parse(previous ?? "");
+  return new Date(Number.isFinite(previousTime) && previousTime >= now ? previousTime + 1 : now).toISOString();
+};
+
+// song: { id?, title, artist, text, transpose, capo, simplify, difficulty, key, mode }
 export async function saveSong(song) {
+  const existing = song.id ? await getStoredSong(song.id) : null;
   const now = new Date().toISOString();
-  const existing = song.id ? await getSong(song.id) : null;
 
   const record = {
     transpose: 0,
     capo: 0,
     simplify: false,
+    difficulty: "medio",
+    key: "",
+    mode: "major",
     artist: "",
     ...existing,
     ...song,
     id: song.id ?? newId(),
+    deletedAt: null,
     title: (song.title ?? existing?.title)?.trim() || "Sem título",
     createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
+    updatedAt: nextUpdatedAt(existing?.updatedAt),
   };
 
   await withStore("readwrite", (store) => store.put(record));
   return record;
 }
 
-export const getSong = (id) => withStore("readonly", (store) => store.get(id)).then((s) => s ?? null);
+const getStoredSong = (id) =>
+  withStore("readonly", (store) => store.get(id)).then((song) => song ?? null);
 
-export const deleteSong = (id) => withStore("readwrite", (store) => store.delete(id));
+export const getSong = async (id) => {
+  const song = await getStoredSong(id);
+  return song?.deletedAt ? null : song;
+};
 
-export async function listSongs() {
-  const songs = await withStore("readonly", (store) => store.getAll());
-  return songs.sort((a, b) => a.title.localeCompare(b.title, "pt-BR", { sensitivity: "base" }));
+export async function deleteSong(id) {
+  const existing = await getStoredSong(id);
+  if (!existing || existing.deletedAt) return;
+  const now = new Date().toISOString();
+  await withStore("readwrite", (store) =>
+    store.put({ ...existing, text: "", deletedAt: now, updatedAt: nextUpdatedAt(existing.updatedAt) }),
+  );
 }
 
+export async function listSongs() {
+  const songs = await listSyncRecords();
+  return songs
+    .filter((song) => !song.deletedAt)
+    .sort((a, b) => a.title.localeCompare(b.title, "pt-BR", { sensitivity: "base" }));
+}
+
+export const listSyncRecords = () =>
+  withStore("readonly", (store) => store.getAll());
+
+const stableRecord = (record) =>
+  JSON.stringify(
+    Object.fromEntries(Object.entries(record).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))),
+  );
+
+export async function mergeSyncRecords(records) {
+  const localSongs = await listSyncRecords();
+  const localById = new Map(localSongs.map((song) => [song.id, song]));
+  let downloaded = 0;
+
+  for (const song of records) {
+    if (!song?.id || typeof song.text !== "string") continue;
+    const existing = localById.get(song.id);
+    const localTime = existing?.updatedAt ?? "";
+    const remoteTime = song.updatedAt ?? "";
+    if (
+      existing &&
+      (localTime > remoteTime ||
+        (localTime === remoteTime &&
+          ((Boolean(existing.deletedAt) && !song.deletedAt) ||
+            (Boolean(existing.deletedAt) === Boolean(song.deletedAt) &&
+              stableRecord(existing) >= stableRecord(song)))))
+    ) {
+      continue;
+    }
+    await withStore("readwrite", (store) => store.put(song));
+    localById.set(song.id, song);
+    downloaded++;
+  }
+
+  return { records: [...localById.values()], downloaded };
+}
+
+/*
+ * Backups intentionally contain only live songs. Tombstones stay local/cloud
+ * so a deletion on one device cannot resurrect the song on another.
+ */
 export async function exportBackup() {
   return {
     format: BACKUP_FORMAT,
     version: 1,
     exportedAt: new Date().toISOString(),
-    songs: await withStore("readonly", (store) => store.getAll()),
+    songs: await listSongs(),
   };
 }
 
@@ -92,13 +156,20 @@ export async function importBackup(backup) {
       continue;
     }
 
-    const existing = await getSong(song.id);
-    if (existing && existing.updatedAt >= song.updatedAt) {
+    const existing = await getStoredSong(song.id);
+    if (existing && !existing.deletedAt && existing.updatedAt >= song.updatedAt) {
       skipped++;
       continue;
     }
 
-    await withStore("readwrite", (store) => store.put(song));
+    const restored = {
+      ...song,
+      deletedAt: null,
+      ...(existing?.deletedAt ? { updatedAt: nextUpdatedAt(existing.updatedAt) } : {}),
+    };
+    await withStore("readwrite", (store) =>
+      store.put(restored),
+    );
     if (existing) updated++;
     else added++;
   }

@@ -18,6 +18,7 @@ import { buildSong, buildSongFromLyrics, getSongBeats } from "./utils/songBuilde
 import { demoChords } from "./utils/songData";
 import { transposeChord } from "./utils/transpose";
 import { requestPersistence, saveSong } from "./utils/songStore";
+import { syncSong } from "./utils/firebase";
 import { importFile, importText } from "./utils/importers";
 import {
   pauseSong,
@@ -52,6 +53,9 @@ function App() {
   const [meta, setMeta] = useState(EMPTY_META);
   const [capo, setCapo] = useState(0);
   const [simplify, setSimplify] = useState(false);
+  const [simplifyDifficulty, setSimplifyDifficulty] = useState("medio");
+  const [songKey, setSongKey] = useState("");
+  const [mode, setMode] = useState("major");
 
   // O andamento é lido pelo Transport, então mudar o BPM afeta a música tocando
   useEffect(() => {
@@ -122,7 +126,16 @@ function App() {
   );
 
   // Troca a cifra aberta: para a reprodução e zera o que era da cifra anterior
-  const openSong = ({ text, meta: nextMeta, transpose: t = 0, capo: c = 0, simplify: s = false }) => {
+  const openSong = ({
+    text,
+    meta: nextMeta,
+    transpose: t = 0,
+    capo: c = 0,
+    simplify: s = false,
+    difficulty: d = "medio",
+    key: k = "",
+    mode: m = "major",
+  }) => {
     handleStop();
     setCurrentSong([]);
     setInput(text);
@@ -130,6 +143,9 @@ function App() {
     setTranspose(t);
     setCapo(c);
     setSimplify(s);
+    setSimplifyDifficulty(d);
+    setSongKey(k);
+    setMode(m);
   };
 
   const handleClear = () => {
@@ -144,6 +160,9 @@ function App() {
       transpose: song.transpose,
       capo: song.capo,
       simplify: song.simplify,
+      difficulty: song.difficulty,
+      key: song.key,
+      mode: song.mode,
     });
     navigate("violao");
   };
@@ -157,9 +176,17 @@ function App() {
       transpose,
       capo,
       simplify,
+      difficulty: simplifyDifficulty,
+      key: songKey,
+      mode,
     });
     setMeta({ id: saved.id, title: saved.title, artist: saved.artist });
     requestPersistence().catch(() => {});
+    try {
+      await syncSong(saved);
+    } catch (error) {
+      throw new Error(`Salva neste aparelho, mas não sincronizou: ${error.message}`, { cause: error });
+    }
   };
 
   // Modo aprendizado: avança quando o acorde certo é tocado no teclado
@@ -254,6 +281,12 @@ function App() {
             onCapoChange={setCapo}
             simplify={simplify}
             onSimplifyChange={setSimplify}
+            simplifyDifficulty={simplifyDifficulty}
+            onSimplifyDifficultyChange={setSimplifyDifficulty}
+            songKey={songKey}
+            onSongKeyChange={setSongKey}
+            mode={mode}
+            onModeChange={setMode}
             onGoTo={navigate}
           />
         </main>

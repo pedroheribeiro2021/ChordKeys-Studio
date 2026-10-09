@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { NOTES, getIntervals, noteIndex } from "./chordUtils";
 import {
+  EASY_SHAPES,
   getGuitarShape,
   needsBarre,
   shapePitchClasses,
   shapeQuality,
   simplifyChord,
+  simplifyChordSmart,
   suggestCapo,
 } from "./guitar";
 
@@ -82,6 +84,97 @@ describe("simplifyChord", () => {
     ["[Intro]", "[Intro]"],
   ])("%s → %s", (chord, expected) => {
     expect(simplifyChord(chord)).toBe(expected);
+  });
+});
+
+describe("simplifyChordSmart", () => {
+  it("retorna alternativas jogáveis ordenadas e mantém a cifra original", () => {
+    const result = simplifyChordSmart("D7M/A", { key: "D" });
+
+    expect(result.original).toBe("D7M/A");
+    expect(result.options[0]).toMatchObject({ chord: "D", shape: "xx0232" });
+    expect(result.options.every((option) => option.score >= 0 && option.score <= 100)).toBe(true);
+    expect(result.options.map((option) => option.score)).toEqual(
+      [...result.options].map((option) => option.score).sort((a, b) => b - a),
+    );
+  });
+
+  it("usa o alvo seguinte para simplificar acorde diminuto de passagem", () => {
+    const result = simplifyChordSmart("Bb°", { key: "D", contextAfter: "Bm" });
+
+    expect(result.options[0]).toMatchObject({ chord: "Bm", reason: "dim-passagem", shape: "x24432" });
+  });
+
+  it("marca meio-diminuto como substituição funcional menor", () => {
+    const result = simplifyChordSmart("F#m7(b5)", { key: "E" });
+
+    expect(result.options.find((option) => option.chord === "F#m").reason).toBe(
+      "substituto-funcional",
+    );
+  });
+
+  it("mantém a sétima dominante quando o sus4 resolve no dominante do mesmo acorde", () => {
+    const result = simplifyChordSmart("D7sus4", { contextAfter: "D7" });
+
+    expect(result.options.find((option) => option.chord === "D7").reason).toBe(
+      "resolucao-sus-dominante",
+    );
+  });
+
+  it("propõe dominante do próximo acorde para acorde menor cromático", () => {
+    const result = simplifyChordSmart("Ebm7/Bb", {
+      key: "D",
+      contextAfter: "Bm",
+    });
+
+    expect(result.options[0]).toMatchObject({
+      chord: "F#7",
+      reason: "dominante-do-proximo",
+      shape: "242322",
+    });
+  });
+
+  it.each([
+    ["G7M(13)", "G"],
+    ["Gm6", "Gm"],
+    ["F#7(#5)", "F#7"],
+  ])("simplifica %s para %s", (chord, expected) => {
+    expect(simplifyChordSmart(chord).options[0].chord).toBe(expected);
+  });
+
+  it("devolve nenhuma alternativa para texto que não é acorde", () => {
+    expect(simplifyChordSmart("[Intro]")).toEqual({ original: "[Intro]", options: [] });
+  });
+
+  it("respeita os shapes permitidos e o nível de habilidade", () => {
+    const result = simplifyChordSmart("D7M/A", {
+      allowedShapes: ["xx0232"],
+      userSkill: "iniciante",
+    });
+
+    expect(result.options.length).toBeGreaterThan(0);
+    expect(result.options.every((option) => option.shape === "xx0232")).toBe(true);
+  });
+
+  it("eleva de 0% para 100% os acordes dos exemplos que usam shapes fáceis", () => {
+    const examples = [
+      ["Ebm7/Bb", "F#7", { key: "D", contextAfter: "Bm" }],
+      ["D7M/A", "D", { key: "D" }],
+      ["G7M(13)", "G", { key: "D" }],
+      ["Gm6", "Gm", { key: "D" }],
+      ["F#7(#5)", "F#7", { key: "D" }],
+      ["Bb°", "Bm", { key: "D", contextAfter: "Bm" }],
+    ];
+    const before = examples.filter(([original]) => EASY_SHAPES[original]).length;
+    const after = examples.filter(([original, expected, context]) => {
+      const top = simplifyChordSmart(original, context).options[0];
+      return top?.chord === expected && top.shape === EASY_SHAPES[expected];
+    }).length;
+
+    expect({ before: `${before}/${examples.length}`, after: `${after}/${examples.length}` }).toEqual({
+      before: "0/6",
+      after: "6/6",
+    });
   });
 });
 

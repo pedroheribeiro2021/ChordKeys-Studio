@@ -3,12 +3,15 @@ import GuitarChordDiagram from "./GuitarChordDiagram";
 import SaveSong from "./SaveSong";
 import { useAutoScroll } from "../hooks/useAutoScroll";
 import { formatSheet, sheetChords } from "../utils/sheet";
-import { simplifyChord, suggestCapo } from "../utils/guitar";
+import { simplifyChordSmart, suggestCapo } from "../utils/guitar";
 import { transposeChord } from "../utils/transpose";
+import { isChord } from "../utils/chordUtils";
+import { isChordLine } from "../utils/lyricsParser";
 
 const MAX_CAPO = 7;
 const SPEED_STEP_PX = 4; // px/s por nível de velocidade
 const FONT_SIZES = [12, 13, 14, 16, 18, 20, 22];
+const KEY_OPTIONS = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
 const formatTranspose = (value) => (value > 0 ? `+${value}` : `${value}`);
 
@@ -22,22 +25,55 @@ export default function GuitarView({
   onCapoChange,
   simplify,
   onSimplifyChange,
+  simplifyDifficulty,
+  onSimplifyDifficultyChange,
+  songKey,
+  onSongKeyChange,
+  mode,
+  onModeChange,
   onGoTo,
 }) {
   const [scrolling, setScrolling] = useState(false);
   const [speed, setSpeed] = useState(3);
   const [fontIndex, setFontIndex] = useState(2);
+  const [columns, setColumns] = useState(2);
 
   useAutoScroll(scrolling, speed * SPEED_STEP_PX, () => setScrolling(false));
 
+  const chordSequence = useMemo(
+    () =>
+      text
+        .split(/\r?\n/)
+        .filter(isChordLine)
+        .flatMap((line) => line.match(/\S+/g) ?? [])
+        .filter(isChord),
+    [text],
+  );
+
   // Com capo na casa N, a cifra mostra o formato tocado (N semitons abaixo do som real)
   const lines = useMemo(
-    () =>
-      formatSheet(text, (chord) => {
+    () => {
+      let chordIndex = 0;
+      return formatSheet(text, (chord) => {
         const shaped = transposeChord(chord, transpose - capo);
-        return simplify ? simplifyChord(shaped) : shaped;
-      }),
-    [text, transpose, capo, simplify],
+        const index = chordIndex++;
+        if (!simplify) return shaped;
+        return (
+          simplifyChordSmart(shaped, {
+            key: songKey ? transposeChord(songKey, transpose - capo) : undefined,
+            mode,
+            difficulty: simplifyDifficulty,
+            contextBefore: chordSequence[index - 1]
+              ? transposeChord(chordSequence[index - 1], transpose - capo)
+              : null,
+            contextAfter: chordSequence[index + 1]
+              ? transposeChord(chordSequence[index + 1], transpose - capo)
+              : null,
+          }).options[0]?.chord ?? shaped
+        );
+      });
+    },
+    [text, transpose, capo, simplify, chordSequence, songKey, mode, simplifyDifficulty],
   );
 
   const chords = useMemo(() => sheetChords(lines), [lines]);
@@ -45,8 +81,14 @@ export default function GuitarView({
   // Sugestão calculada sobre os acordes no tom que soa (sem capo)
   const suggestion = useMemo(() => {
     const sounding = sheetChords(formatSheet(text, (c) => transposeChord(c, transpose)));
-    return suggestCapo(sounding, { maxCapo: MAX_CAPO, simplify });
-  }, [text, transpose, simplify]);
+    return suggestCapo(sounding, {
+      maxCapo: MAX_CAPO,
+      simplify,
+      key: songKey ? transposeChord(songKey, transpose) : undefined,
+      mode,
+      difficulty: simplifyDifficulty,
+    });
+  }, [text, transpose, simplify, songKey, mode, simplifyDifficulty]);
 
   if (!text.trim()) {
     return (
@@ -91,6 +133,26 @@ export default function GuitarView({
           >
             Simplificar acordes
           </button>
+          {simplify && (
+            <div className="row" role="group" aria-label="Nível de simplificação">
+              <span className="muted">Estilo</span>
+              {[
+                ["facil", "Fácil"],
+                ["medio", "Equilibrado"],
+                ["fiel", "Fiel"],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="btn btn-sm"
+                  aria-pressed={simplifyDifficulty === value}
+                  onClick={() => onSimplifyDifficultyChange(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <label className="row field-label">
             Capo
@@ -105,6 +167,31 @@ export default function GuitarView({
                   {i + 1}ª casa
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="row field-label">
+            Tom
+            <select
+              className="input input-auto"
+              value={songKey}
+              onChange={(e) => onSongKeyChange(e.target.value)}
+            >
+              <option value="">Não definido</option>
+              {KEY_OPTIONS.map((note) => (
+                <option key={note} value={note}>{note}</option>
+              ))}
+            </select>
+          </label>
+          <label className="row field-label">
+            Modo
+            <select
+              className="input input-auto"
+              value={mode}
+              onChange={(e) => onModeChange(e.target.value)}
+              disabled={!songKey}
+            >
+              <option value="major">Maior</option>
+              <option value="minor">Menor</option>
             </select>
           </label>
 
@@ -125,6 +212,22 @@ export default function GuitarView({
             >
               A+
             </button>
+          </div>
+          <div className="row" role="group" aria-label="Máximo de colunas da cifra">
+            <span className="muted">Colunas</span>
+            {[1, 2, 3].map((count) => (
+              <button
+                key={count}
+                type="button"
+                className="btn btn-sm"
+                aria-pressed={columns === count}
+                aria-label={`Até ${count} ${count === 1 ? "coluna" : "colunas"}`}
+                onClick={() => setColumns(count)}
+              >
+                {count}
+              </button>
+            ))}
+            <span className="muted">Em telas estreitas, a cifra fica em uma coluna para facilitar a leitura.</span>
           </div>
         </div>
 
@@ -157,7 +260,10 @@ export default function GuitarView({
             {transpose !== 0 && `Tom ${formatTranspose(transpose)}.`}
           </p>
         )}
-        <pre className="sheet" style={{ fontSize: FONT_SIZES[fontIndex] }}>
+        <pre
+          className="sheet"
+          style={{ fontSize: FONT_SIZES[fontIndex], "--sheet-columns": columns }}
+        >
           {lines.map((line, i) =>
             line.type === "text" ? (
               <div key={i}>{line.text || " "}</div>

@@ -18,7 +18,6 @@ Atualizado em 2026-10-02. Itens concluídos saem daqui e vão para o `Registro-d
 
 ## Ideias para depois
 
-- [ ] Sincronizar cifras entre aparelhos (Supabase) — ver ADR 0001.
 - [ ] Editar a cifra direto na tela do Violão.
 - [ ] Desenhar acordes de violão com baixo invertido (`D/F#`, `Ebm7/Bb`); hoje o desenho ignora o baixo.
 - [ ] "Compartilhar com o ChordKeys" no Android (Web Share Target com arquivo exige tratar o POST no service worker).
