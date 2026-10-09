@@ -712,8 +712,21 @@ input[type="range"] {
   font-family: var(--mono);
   line-height: 1.55;
   white-space: pre;
+  column-count: var(--sheet-columns, 2);
+  column-width: 240px;
+  column-gap: 2rem;
   overflow-x: auto;
   scrollbar-width: thin;
+}
+
+.sheet > div {
+  break-inside: avoid;
+}
+
+@media (max-width: 520px) {
+  .sheet {
+    column-count: 1;
+  }
 }
 
 .sheet-chord {

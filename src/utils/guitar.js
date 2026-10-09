@@ -1,4 +1,4 @@
-import { NOTES, getIntervals, noteIndex, parseChord } from "./chordUtils";
+import { FLAT_NOTES, NOTES, getIntervals, noteIndex, parseChord } from "./chordUtils";
 import { transposeChord } from "./transpose";
 
 // Afinação padrão, da 6ª corda (E grave) para a 1ª (E aguda)
@@ -141,12 +141,249 @@ export function simplifyChord(chord) {
   return `${parsed.root}${SIMPLE_SUFFIX[shapeQuality(parsed.suffix)]}`;
 }
 
+export const EASY_SHAPES = {
+  Bm: "x24432",
+  "F#7": "242322",
+  D: "xx0232",
+  G: "320033",
+  Em: "022000",
+  Gm: "355333",
+  A: "x02220",
+  E7: "020100",
+  Am: "x02210",
+  C: "x32010",
+  Dm: "xx0231",
+  F: "133211",
+};
+
+const MODE_INTERVALS = {
+  major: [0, 2, 4, 5, 7, 9, 11],
+  minor: [0, 2, 3, 5, 7, 8, 10],
+};
+const NATURAL_NOTES = ["C", "D", "E", "F", "G", "A", "B"];
+const NATURAL_PITCHES = [0, 2, 4, 5, 7, 9, 11];
+
+function keyScale(key, mode) {
+  const tonic = parseChord(key ?? "");
+  const intervals = MODE_INTERVALS[mode] ?? MODE_INTERVALS.major;
+  if (!tonic) return null;
+
+  const tonicLetter = NATURAL_NOTES.indexOf(tonic.root[0]);
+  const tonicPitch = noteIndex(tonic.root);
+  return intervals.map((interval, degree) => {
+    const letter = NATURAL_NOTES[(tonicLetter + degree) % NATURAL_NOTES.length];
+    const expectedPitch = (tonicPitch + interval) % 12;
+    const naturalPitch = NATURAL_PITCHES[NATURAL_NOTES.indexOf(letter)];
+    const alteration = (expectedPitch - naturalPitch + 12) % 12;
+    const accidental = alteration === 1 ? "#" : alteration === 11 ? "b" : "";
+    return { pitch: expectedPitch, note: `${letter}${accidental}` };
+  });
+}
+
+function spellRoot(pitch, key, mode, fallback) {
+  const scale = keyScale(key, mode);
+  return scale?.find((note) => note.pitch === pitch)?.note ?? (key ? FLAT_NOTES[pitch] : fallback);
+}
+
+const rootPitch = (chord) => {
+  const parsed = parseChord(chord);
+  return parsed ? noteIndex(parsed.root) : -1;
+};
+
+const chordName = (value) => (typeof value === "string" ? value : value?.chord ?? "");
+
+function harmonicFunction(chord, key, mode) {
+  const scale = keyScale(key, mode);
+  const root = rootPitch(chord);
+  const degree = scale?.findIndex((note) => note.pitch === root) ?? -1;
+  if (degree < 0) return null;
+  if (mode === "minor") {
+    return [0, 2, 5].includes(degree) ? "tonic" : [1, 3].includes(degree) ? "subdominant" : "dominant";
+  }
+  return [0, 2, 5].includes(degree) ? "tonic" : [1, 3].includes(degree) ? "subdominant" : "dominant";
+}
+
+function pitchClasses(chord) {
+  const parsed = parseChord(chord);
+  if (!parsed) return [];
+  return getIntervals(parsed.suffix).map((interval) => (noteIndex(parsed.root) + interval) % 12);
+}
+
+function fingering(chord) {
+  const shape = getGuitarShape(chord);
+  if (!shape) return null;
+  return {
+    shape: EASY_SHAPES[chord] ?? shape.frets.map((fret) => (fret < 0 ? "x" : fret)).join(""),
+    barre: shape.barre,
+    frets: shape.frets,
+  };
+}
+
+function candidateRecord(chord, reason, original, context) {
+  const parsed = parseChord(chord);
+  if (!parsed) return null;
+  const { key, mode, difficulty, contextBefore, contextAfter } = context;
+  const root = spellRoot(noteIndex(parsed.root), key, mode, parsed.root);
+  const candidate = `${root}${parsed.suffix}${parsed.bass ? `/${parsed.bass}` : ""}`;
+  const fingeringInfo = fingering(candidate);
+  if (!fingeringInfo) return null;
+
+  const originalPitches = new Set(pitchClasses(original));
+  const kept = pitchClasses(candidate).filter((pitch) => originalPitches.has(pitch)).length;
+  const total = Math.max(originalPitches.size, 1);
+  const shapeQualityScore = EASY_SHAPES[candidate]
+    ? 30
+    : fingeringInfo.barre == null
+      ? 15
+      : 0;
+  const functionPreserved =
+    harmonicFunction(original, key, mode) &&
+    harmonicFunction(original, key, mode) === harmonicFunction(candidate, key, mode);
+  const inKey = keyScale(key, mode)?.some((note) => note.pitch === rootPitch(candidate)) ?? false;
+  const appearsNearby = [contextBefore, contextAfter].some(
+    (nearby) => nearby && rootPitch(nearby) === rootPitch(candidate),
+  );
+  const highBarre = fingeringInfo.barre > 5;
+  const barreStrings = fingeringInfo.frets.filter((fret) => fret === fingeringInfo.barre).length;
+  const partialBarre = fingeringInfo.barre != null && barreStrings < 4;
+  const doubleBarre =
+    fingeringInfo.barre != null &&
+    fingeringInfo.frets.some(
+      (fret, index) =>
+        fret > 0 &&
+        fret !== fingeringInfo.barre &&
+        fingeringInfo.frets.indexOf(fret) === index &&
+        fingeringInfo.frets.filter((other) => other === fret).length >= 2,
+    );
+  const passage = context.durationBeats != null && context.durationBeats <= 2 && !context.strongBeat;
+
+  const weights = {
+    facil: { shape: 1.5, fidelity: 0.5, function: 0.5, key: 0.5 },
+    medio: { shape: 1, fidelity: 1, function: 1, key: 1 },
+    fiel: { shape: 0.5, fidelity: 2, function: 1.5, key: 1 },
+  }[difficulty] ?? { shape: 1, fidelity: 1, function: 1, key: 1 };
+  let score =
+    shapeQualityScore * weights.shape +
+    (20 * kept / total) * weights.fidelity +
+    (functionPreserved ? 15 * weights.function : 0) +
+    (inKey ? 10 * weights.key : 0) +
+    (appearsNearby ? 5 : 0) -
+    (partialBarre ? 15 : 0) -
+    (doubleBarre ? 10 : 0) -
+    (highBarre ? 20 * weights.shape : 0);
+  if (passage && reason !== "original") score += 5;
+  if (context.durationBeats >= 4 && context.strongBeat && reason !== "original") score -= 10;
+  score = Math.max(0, Math.min(100, Math.round(score)));
+
+  return {
+    chord: candidate,
+    shape: fingeringInfo.shape,
+    score,
+    reason,
+    intervalsKept: kept,
+  };
+}
+
+// Generates playable alternatives and ranks them without changing the source chord.
+export function simplifyChordSmart(chord, context = {}) {
+  const parsed = parseChord(chord);
+  if (!parsed) return { original: chord, options: [] };
+  const skillDifficulty = {
+    iniciante: "facil",
+    intermediario: "medio",
+    avancado: "fiel",
+  };
+  const ctx = {
+    ...context,
+    mode: context.mode ?? "major",
+    difficulty: context.difficulty ?? skillDifficulty[context.userSkill] ?? "medio",
+  };
+  const quality = shapeQuality(parsed.suffix);
+  const root = parsed.root;
+  const after = parseChord(chordName(ctx.contextAfter));
+  const candidates = [{ chord, reason: "original" }];
+  const triad = `${root}${SIMPLE_SUFFIX[quality] ?? ""}`;
+
+  candidates.push({ chord: triad, reason: "triade" });
+  if (parsed.bass) candidates.push({ chord: `${root}${parsed.suffix}`, reason: "drop-bass" });
+
+  if (quality === "m7(b5)") candidates.push({ chord: `${root}m`, reason: "substituto-funcional" });
+  if (quality === "7" || parsed.suffix.includes("#") || parsed.suffix.includes("b")) {
+    candidates.push({ chord: `${root}7`, reason: "dominante-simples" });
+  }
+  if (quality === "sus4" || quality === "sus2") {
+    candidates.push({ chord: root, reason: "resolucao-sus" });
+    if (quality === "sus4" && after && after.root === root && ["7", "m7"].includes(shapeQuality(after.suffix))) {
+      candidates.push({ chord: `${root}7`, reason: "resolucao-sus-dominante" });
+    }
+  }
+
+  if (quality === "dim" && after) {
+    candidates.push({
+      chord: `${after.root}m`,
+      reason: "dim-passagem",
+    });
+  }
+  if (
+    quality === "m7" &&
+    after &&
+    ctx.key &&
+    !keyScale(ctx.key, ctx.mode)?.some((note) => note.pitch === rootPitch(chord))
+  ) {
+    const dominantRoot = NOTES[(noteIndex(after.root) + 7) % 12];
+    candidates.push({
+      chord: `${spellRoot(noteIndex(dominantRoot), ctx.key, ctx.mode, dominantRoot)}7`,
+      reason: "dominante-do-proximo",
+    });
+  }
+
+  const byChord = new Map();
+  const reasonPriority = {
+    original: 0,
+    "dim-passagem": 1,
+    "dominante-do-proximo": 1,
+    "resolucao-sus-dominante": 1,
+    "substituto-funcional": 1,
+    "dominante-simples": 2,
+    "drop-bass": 3,
+    triade: 4,
+    "resolucao-sus": 5,
+  };
+  for (const candidate of candidates) {
+    const scored = candidateRecord(candidate.chord, candidate.reason, chord, ctx);
+    if (!scored) continue;
+    if (ctx.allowedShapes?.length && !ctx.allowedShapes.includes(scored.shape)) continue;
+    const previous = byChord.get(scored.chord);
+    if (
+      !previous ||
+      scored.score > previous.score ||
+      (scored.score === previous.score &&
+        reasonPriority[scored.reason] < reasonPriority[previous.reason])
+    ) {
+      byChord.set(scored.chord, scored);
+    }
+  }
+
+  return {
+    original: chord,
+    options: [...byChord.values()].sort((a, b) => b.score - a.score || a.chord.localeCompare(b.chord)),
+  };
+}
+
 // Escolhe a casa do capotraste que deixa menos acordes com pestana.
 // Com capo na casa N, toca-se o formato do acorde N semitons abaixo.
-export function suggestCapo(chords, { maxCapo = 7, simplify = false } = {}) {
+export function suggestCapo(chords, {
+  maxCapo = 7,
+  simplify = false,
+  key,
+  mode = "major",
+  difficulty = "medio",
+} = {}) {
   const shapeFor = (chord, capo) => {
     const shaped = transposeChord(chord, -capo);
-    return simplify ? simplifyChord(shaped) : shaped;
+    if (!simplify) return shaped;
+    const shapedKey = key ? transposeChord(key, -capo) : undefined;
+    return simplifyChordSmart(shaped, { key: shapedKey, mode, difficulty }).options[0]?.chord ?? shaped;
   };
 
   const barresAt = (capo) => chords.filter((c) => needsBarre(shapeFor(c, capo))).length;

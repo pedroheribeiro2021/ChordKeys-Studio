@@ -1,27 +1,31 @@
-# ADR 0001 — Cifras salvas só no aparelho (IndexedDB)
+# ADR 0001 — Cifras locais e sincronizadas (IndexedDB + Firebase)
 
-**Status**: aceita (2026-10-01)
+**Status**: aceita, atualizada em 2026-10-08
 
 ## Contexto
 
-O Pedro quer salvar cifras para tocar depois, principalmente no celular, com o app instalado como PWA. O projeto não tem backend nem login. A organização Supabase já está no limite de projetos gratuitos (ver `Infra-Cloud-Compartilhada` no vault).
+As cifras precisam ficar acessíveis em mais de um aparelho sem exportar/importar arquivos. O projeto já usa IndexedDB e precisa continuar funcionando offline. Não há disponibilidade para criar outro schema no Supabase.
 
 ## Decisão
 
-As cifras ficam no próprio aparelho, em **IndexedDB** (`src/utils/songStore.js`, sem biblioteca):
+Manter **IndexedDB** como cópia local/offline e adicionar sincronização opcional com **Firebase Authentication + Cloud Firestore**:
 
-- `navigator.storage.persist()` no primeiro salvamento, para o navegador não apagar os dados quando faltar espaço.
-- **Backup em JSON** (exportar/importar) para levar as cifras a outro aparelho. Na importação, vence a versão editada por último (`updatedAt`).
-- Cada cifra guarda também tom, capo e "simplificar", para reabrir do jeito que foi deixada.
+- Entrar com Google para vincular a biblioteca à conta.
+- Guardar cada cifra em `users/{uid}/songs/{songId}`; as Security Rules restringem acesso ao proprietário.
+- Mesclar aparelhos por `updatedAt`; a edição mais recente vence. Exclusões são sincronizadas como tombstones para não ressuscitar uma música antiga.
+- Manter **backup em JSON** como cópia independente.
+- Cada cifra continua guardando tom transposto, tom/modo da música, capo e opção/estilo de simplificação.
+- As chaves públicas de configuração do Firebase vêm de variáveis `VITE_FIREBASE_*`; regras e passos de configuração ficam no README.
 
 ## Alternativas consideradas
 
 - **SQLite no navegador (WASM + OPFS)**: o arquivo do banco também fica no armazenamento do site, então tem o mesmo ciclo de vida do IndexedDB. Custaria ~1 MB de biblioteca sem nenhum ganho para uma lista de cifras.
-- **Supabase com login**: sincroniza entre aparelhos, mas exige login e um schema no projeto `rachaconta`. Fica para quando houver necessidade real de sincronização.
+- **Supabase**: não atende enquanto não houver disponibilidade para criar schema/tabela no projeto existente.
 - **localStorage**: limite baixo (~5 MB) e API síncrona; serve para o histórico de URLs, não para cifras.
 
 ## Consequências
 
-- Apagar os dados do site ou desinstalar o app apaga as cifras. O backup é a proteção.
-- No iPhone, o Safari apaga os dados de sites sem uso há 7 dias, **exceto** quando o app está instalado na tela inicial. A tela "Minhas cifras" orienta isso quando o armazenamento não está persistente.
-- Migrar para sincronização no futuro é aditivo: o formato do backup já é a lista de cifras com `id` e `updatedAt`.
+- O app segue utilizável sem login e offline; com login e internet, sincroniza na abertura da biblioteca e ao salvar/excluir.
+- Firebase Spark oferece cotas gratuitas, sujeitas a limites e mudanças. O uso deve ser monitorado; o app não exige habilitar faturamento por conta própria.
+- Apagar dados do navegador remove a cópia local, mas não a versão sincronizada na conta. O backup JSON segue como proteção extra.
+- No iPhone, o Safari pode remover dados locais de sites sem uso; manter a sincronização ativa recupera a cópia ao entrar novamente.

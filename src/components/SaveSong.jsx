@@ -6,6 +6,7 @@ export default function SaveSong({ meta, disabled, onSave }) {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [status, setStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("Não foi possível salvar.");
 
   useEffect(() => {
     if (status !== "saved") return;
@@ -19,7 +20,8 @@ export default function SaveSong({ meta, disabled, onSave }) {
       await onSave(fields);
       setEditing(false);
       setStatus("saved");
-    } catch {
+    } catch (error) {
+      setErrorMessage(error.message || "Não foi possível salvar.");
       setStatus("error");
     }
   };
@@ -81,7 +83,7 @@ export default function SaveSong({ meta, disabled, onSave }) {
         {meta.id ? "Salvar alterações" : "Salvar cifra"}
       </button>
       {status === "saved" && <span className="muted" role="status">Salvo ✓</span>}
-      {status === "error" && <span className="error" role="alert">Não foi possível salvar.</span>}
+      {status === "error" && <span className="error" role="alert">{errorMessage}</span>}
     </div>
   );
 }
