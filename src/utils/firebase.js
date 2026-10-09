@@ -7,7 +7,18 @@ const config = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-export const firebaseConfigured = Object.values(config).every(Boolean);
+const configEnvNames = {
+  apiKey: "VITE_FIREBASE_API_KEY",
+  authDomain: "VITE_FIREBASE_AUTH_DOMAIN",
+  projectId: "VITE_FIREBASE_PROJECT_ID",
+  appId: "VITE_FIREBASE_APP_ID",
+};
+
+export const missingFirebaseConfig = Object.entries(config)
+  .filter(([, value]) => typeof value !== "string" || !value.trim())
+  .map(([key]) => configEnvNames[key]);
+
+export const firebaseConfigured = missingFirebaseConfig.length === 0;
 
 let servicesPromise;
 

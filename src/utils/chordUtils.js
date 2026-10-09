@@ -3,7 +3,7 @@ export const FLAT_NOTES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A",
 
 // Aceita a notação usada em cifras brasileiras: C7M, F#m7(b5), Bbº, D/F#, G7(9), Asus4...
 const CHORD_REGEX =
-  /^([A-G][#b]?)((?:maj|min|dim|aug|sus|add|alt|m|M|º|°|ø|Δ|\+|-|\d|\(|\)|[#b]|,)*)(\/9)?(?:\/([A-G][#b]?))?$/;
+  /^([A-G][#b]?)((?:\([^)]*\)|maj|min|dim|aug|sus|add|alt|m|M|º|°|ø|Δ|\+|-|\d|[#b]|,)*)(\/9)?(?:\/([A-G][#b]?))?$/;
 
 export function noteIndex(note) {
   const sharp = NOTES.indexOf(note);
@@ -28,7 +28,7 @@ export function getIntervals(suffix) {
   const s = suffix
     .replace(/[º°]/g, "dim")
     .replace(/ø/g, "m7(b5)")
-    .replace(/\+/g, "aug")
+    .replace(/^\+$/, "aug")
     .replace(/Δ/g, "7M")
     .replace(/^-/, "m")
     .replace(/maj7|M7/g, "7M");
@@ -47,7 +47,7 @@ export function getIntervals(suffix) {
   const intervals = [0, third, fifth];
 
   // Extensões ficam dentro de parênteses ou depois do 7 (G7(9), C7M(9), G9, G13)
-  const tensions = s.match(/(?:add)?[#b]?\d+/g) ?? [];
+  const tensions = s.match(/(?:add)?[#b]?\d+[+-]?/g) ?? [];
 
   // G9 e G13 (fora de parênteses e sem "add") implicam a sétima
   const outside = s.replace(/\(.*?\)/g, "").replace(/add\d+/g, "");
@@ -64,7 +64,11 @@ export function getIntervals(suffix) {
     const degree = Number(t.replace(/\D/g, ""));
     const base = TENSION_INTERVALS[degree];
     if (base === undefined) continue;
-    const shift = t.includes("b") && !t.startsWith("add") ? -1 : t.includes("#") ? 1 : 0;
+    const shift = t.includes("b") && !t.startsWith("add") || t.endsWith("-")
+      ? -1
+      : t.includes("#") || t.endsWith("+")
+        ? 1
+        : 0;
     intervals.push(base + shift);
   }
 

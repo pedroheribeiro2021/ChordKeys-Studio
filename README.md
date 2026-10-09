@@ -16,7 +16,7 @@ The interface is in Brazilian Portuguese and understands the chord notation used
 **Guitar**
 - Chord sheet with chords highlighted over the lyrics, transposed without breaking the alignment.
 - Chord diagrams (open shapes and E/A barre shapes for any root).
-- **Simplify chords**: reduces to triads (`C7M(9)` → `C`, `F#m7(b5)` → `F#m`).
+- **Smart chord simplification**: keeps harmonic color by default, offers ranked alternatives for easy/balanced/faithful playing, and considers chord context and repertoire.
 - **Capo suggestion**: finds the fret that leaves the fewest barre chords.
 - **Auto-scroll** with speed control; keeps the screen awake (Wake Lock).
 - **Smart chord simplification** ranks playable alternatives using chord context, selected song key/mode and a faithful/balanced/easy style.
@@ -36,10 +36,12 @@ React 19 · Vite 8 · Tone.js · pdf.js (lazy-loaded) · Firebase Authentication
 1. Create a Firebase project and register a Web app.
 2. Enable **Google** in Authentication → Sign-in method.
 3. Create a Cloud Firestore database; in its **Rules** tab, paste `firestore.rules` and publish.
-4. Copy `.env.example` to `.env.local` and fill in the Web app's API key, Auth domain, project ID and app ID.
-5. Add the deployed app's domain to Authentication → Settings → Authorized domains. Set the same `VITE_FIREBASE_*` values in the static host's build environment before rebuilding/redeploying.
+4. Copy `.env.example` to `.env.local` and fill in the Web app's API key, Auth domain, project ID and app ID. Restart `npm run dev` after changing the file; Vite reads `VITE_*` values at startup/build time.
+5. Add `localhost` and the deployed app's exact hostname to Authentication → Settings → Authorized domains. Set the same `VITE_FIREBASE_*` values in the static host's build environment before rebuilding/redeploying; setting them only in the hosting dashboard without a new build does not update an existing bundle.
 
 Firebase web config values identify the project; Firestore Security Rules enforce per-account access. The rules only allow each signed-in user to read and write `users/{uid}/songs/*` for their own UID. The Spark plan has daily read/write limits; monitor usage in the Firebase console. IndexedDB stays as the offline copy and pending local deletions are synchronized as tombstones.
+
+Smart chord simplification is enabled by default. Set `VITE_SMART_CHORDS=false` at build time to use the legacy simplifier instead.
 
 ## Getting started
 
@@ -64,7 +66,12 @@ src/
   utils/
     chordUtils.js   chord parsing and notes (flats, extensions, slash chords)
     transpose.js    transposition keeping the chord suffix
-    guitar.js       guitar shapes, simplification, capo suggestion
+    guitar.js       compatible guitar API and capo suggestion
+    chordParser.js  structured chord parsing and formatting
+    chordShapes.js  open/movable guitar shapes and complexity
+    chordSimplifier.js repertoire-aware candidate generation
+    chordRanker.js  playable-shape and harmony ranking
+    repertoire.js   chord-sheet classification and profiles
     sheet.js        chord sheet formatting with stable columns
     songStore.js    IndexedDB storage, sync merge and JSON backup
     firebase.js     Google authentication and Firestore synchronization

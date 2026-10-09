@@ -7,6 +7,7 @@ import {
 } from "../utils/songStore";
 import {
   firebaseConfigured,
+  missingFirebaseConfig,
   observeAuth,
   signIn,
   signOutUser,
@@ -162,7 +163,7 @@ export default function Library({ onOpen }) {
         return;
       }
       setMessage({
-        text: `Backup importado: ${added} nova(s), ${updated} atualizada(s)${skipped ? `, ${skipped} já estava(m) em dia` : ""}.${syncResult.uploaded ? ` ${syncResult.uploaded} enviada(s) à nuvem.` : ""}`,
+        text: `Backup importado ${firebaseConfigured && user ? "e sincronizado" : "neste aparelho"}: ${added} nova(s), ${updated} atualizada(s)${skipped ? `, ${skipped} já estava(m) em dia` : ""}.${syncResult.uploaded ? ` ${syncResult.uploaded} enviada(s) à nuvem.` : ""}`,
       });
     } catch (error) {
       setMessage({
@@ -222,9 +223,9 @@ export default function Library({ onOpen }) {
         </h2>
         {!firebaseConfigured ? (
           <p className="muted backup-text">
-            Firebase ainda não está configurado. Adicione as variáveis VITE_FIREBASE_* do
-            arquivo .env.example e publique as regras de firestore.rules para sincronizar
-            suas cifras entre aparelhos.
+            Firebase não conectado: faltam {missingFirebaseConfig.join(", ")}. Configure essas
+            variáveis no ambiente local ou de build e reinicie/republique o app. Depois, habilite
+            Google Authentication, crie o Firestore e publique firestore.rules.
           </p>
         ) : user ? (
           <>
