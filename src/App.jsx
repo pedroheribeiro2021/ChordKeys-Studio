@@ -183,7 +183,7 @@ function App() {
     setMeta({ id: saved.id, title: saved.title, artist: saved.artist });
     requestPersistence().catch(() => {});
     try {
-      await syncSong(saved);
+      return { synced: await syncSong(saved) };
     } catch (error) {
       throw new Error(`Salva neste aparelho, mas não sincronizou: ${error.message}`, { cause: error });
     }

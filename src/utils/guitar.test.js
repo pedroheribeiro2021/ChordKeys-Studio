@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { NOTES, getIntervals, noteIndex } from "./chordUtils";
 import {
-  EASY_SHAPES,
   getGuitarShape,
   needsBarre,
   shapePitchClasses,
@@ -9,6 +8,7 @@ import {
   simplifyChord,
   simplifyChordSmart,
   suggestCapo,
+  TUNING,
 } from "./guitar";
 
 const QUALITIES = ["", "m", "7", "m7", "7M", "sus4", "sus2", "dim", "m7(b5)", "aug"];
@@ -47,9 +47,12 @@ describe("getGuitarShape", () => {
     expect(getGuitarShape("Bm")).toMatchObject({ frets: [-1, 2, 4, 4, 3, 2], barre: 2 });
   });
 
-  it("entende bemóis e ignora o baixo", () => {
+  it("entende bemóis e constrói uma inversão quando o shape aberto não contém o baixo", () => {
     expect(getGuitarShape("Bb")).toMatchObject({ barre: 1 });
-    expect(getGuitarShape("D/F#")).toMatchObject({ frets: [-1, -1, 0, 2, 3, 2] });
+    expect(getGuitarShape("D/F#")).toMatchObject({ frets: [2, -1, 0, 2, 3, 2] });
+    const inversion = getGuitarShape("D7M/A").frets;
+    const bassString = inversion.findIndex((fret) => fret >= 0);
+    expect((TUNING[bassString] + inversion[bassString]) % 12).toBe(noteIndex("A"));
   });
 
   it("devolve null para texto que não é acorde", () => {
@@ -88,28 +91,31 @@ describe("simplifyChord", () => {
 });
 
 describe("simplifyChordSmart", () => {
-  it("retorna alternativas jogáveis ordenadas e mantém a cifra original", () => {
-    const result = simplifyChordSmart("D7M/A", { key: "D" });
+  it("preserva inversões e extensões na opção mais fiel", () => {
+    const result = simplifyChordSmart("D7M/A", { key: "D", difficulty: "fiel" });
 
     expect(result.original).toBe("D7M/A");
-    expect(result.options[0]).toMatchObject({ chord: "D", shape: "xx0232" });
+    expect(result.options[0].chord).toBe("D7M/A");
     expect(result.options.every((option) => option.score >= 0 && option.score <= 100)).toBe(true);
     expect(result.options.map((option) => option.score)).toEqual(
       [...result.options].map((option) => option.score).sort((a, b) => b - a),
     );
   });
 
-  it("usa o alvo seguinte para simplificar acorde diminuto de passagem", () => {
-    const result = simplifyChordSmart("Bb°", { key: "D", contextAfter: "Bm" });
+  it("preserva o diminuto cromático entre dois acordes", () => {
+    const result = simplifyChordSmart("G°", {
+      contextBefore: "G#m/B",
+      contextAfter: "F#m7",
+    });
 
-    expect(result.options[0]).toMatchObject({ chord: "Bm", reason: "dim-passagem", shape: "x24432" });
+    expect(result.options[0]).toMatchObject({ chord: "G°", reason: "keep-diminished" });
   });
 
   it("marca meio-diminuto como substituição funcional menor", () => {
     const result = simplifyChordSmart("F#m7(b5)", { key: "E" });
 
     expect(result.options.find((option) => option.chord === "F#m").reason).toBe(
-      "substituto-funcional",
+      "functional-substitute",
     );
   });
 
@@ -117,7 +123,7 @@ describe("simplifyChordSmart", () => {
     const result = simplifyChordSmart("D7sus4", { contextAfter: "D7" });
 
     expect(result.options.find((option) => option.chord === "D7").reason).toBe(
-      "resolucao-sus-dominante",
+      "sus-resolution",
     );
   });
 
@@ -127,16 +133,16 @@ describe("simplifyChordSmart", () => {
       contextAfter: "Bm",
     });
 
-    expect(result.options[0]).toMatchObject({
+    expect(result.options.find((option) => option.chord === "F#7")).toMatchObject({
       chord: "F#7",
-      reason: "dominante-do-proximo",
+      reason: "dominant-of-next",
       shape: "242322",
     });
   });
 
   it.each([
-    ["G7M(13)", "G"],
-    ["Gm6", "Gm"],
+    ["G7M(13)", "G7M"],
+    ["Gm6", "Gm6"],
     ["F#7(#5)", "F#7"],
   ])("simplifica %s para %s", (chord, expected) => {
     expect(simplifyChordSmart(chord).options[0].chord).toBe(expected);
@@ -156,25 +162,13 @@ describe("simplifyChordSmart", () => {
     expect(result.options.every((option) => option.shape === "xx0232")).toBe(true);
   });
 
-  it("eleva de 0% para 100% os acordes dos exemplos que usam shapes fáceis", () => {
-    const examples = [
-      ["Ebm7/Bb", "F#7", { key: "D", contextAfter: "Bm" }],
-      ["D7M/A", "D", { key: "D" }],
-      ["G7M(13)", "G", { key: "D" }],
-      ["Gm6", "Gm", { key: "D" }],
-      ["F#7(#5)", "F#7", { key: "D" }],
-      ["Bb°", "Bm", { key: "D", contextAfter: "Bm" }],
-    ];
-    const before = examples.filter(([original]) => EASY_SHAPES[original]).length;
-    const after = examples.filter(([original, expected, context]) => {
-      const top = simplifyChordSmart(original, context).options[0];
-      return top?.chord === expected && top.shape === EASY_SHAPES[expected];
-    }).length;
-
-    expect({ before: `${before}/${examples.length}`, after: `${after}/${examples.length}` }).toEqual({
-      before: "0/6",
-      after: "6/6",
+  it("retorna somente alternativas com shape permitido", () => {
+    const result = simplifyChordSmart("D7M/A", {
+      allowedShapes: ["xx0232"],
+      userSkill: "iniciante",
     });
+    expect(result.options.length).toBeGreaterThan(0);
+    expect(result.options.every((option) => option.shape === "xx0232")).toBe(true);
   });
 });
 

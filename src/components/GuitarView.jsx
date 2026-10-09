@@ -3,15 +3,22 @@ import GuitarChordDiagram from "./GuitarChordDiagram";
 import SaveSong from "./SaveSong";
 import { useAutoScroll } from "../hooks/useAutoScroll";
 import { formatSheet, sheetChords } from "../utils/sheet";
-import { simplifyChordSmart, suggestCapo } from "../utils/guitar";
+import {
+  simplifyChord,
+  simplifyChordSmart,
+  suggestCapo,
+  suggestGuitarTranspose,
+} from "../utils/guitar";
 import { transposeChord } from "../utils/transpose";
 import { isChord } from "../utils/chordUtils";
 import { isChordLine } from "../utils/lyricsParser";
+import { detectRepertoire } from "../utils/repertoire";
 
 const MAX_CAPO = 7;
 const SPEED_STEP_PX = 4; // px/s por nível de velocidade
 const FONT_SIZES = [12, 13, 14, 16, 18, 20, 22];
 const KEY_OPTIONS = ["C", "Db", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
+const SMART_CHORDS_ENABLED = import.meta.env.VITE_SMART_CHORDS !== "false";
 
 const formatTranspose = (value) => (value > 0 ? `+${value}` : `${value}`);
 
@@ -49,6 +56,37 @@ export default function GuitarView({
         .filter(isChord),
     [text],
   );
+  const repertoire = useMemo(() => detectRepertoire(text), [text]);
+  const smartOptions = useMemo(
+    () =>
+      chordSequence.map((chord, index) =>
+        simplifyChordSmart(transposeChord(chord, transpose - capo), {
+          key: songKey ? transposeChord(songKey, transpose - capo) : undefined,
+          mode,
+          repertoire,
+          difficulty: simplifyDifficulty,
+          contextBefore: chordSequence[index - 1]
+            ? transposeChord(chordSequence[index - 1], transpose - capo)
+            : null,
+          contextAfter: chordSequence[index + 1]
+            ? transposeChord(chordSequence[index + 1], transpose - capo)
+            : null,
+        }),
+      ),
+    [chordSequence, transpose, capo, songKey, mode, repertoire, simplifyDifficulty],
+  );
+  const hasSimplificationChoices = smartOptions.some((result) => result.options.length > 1);
+  const transposeSuggestion = useMemo(
+    () =>
+      suggestGuitarTranspose(
+        chordSequence.map((chord) => transposeChord(chord, transpose - capo)),
+        {
+          key: songKey ? transposeChord(songKey, transpose - capo) : undefined,
+          repertoire,
+        },
+      ),
+    [chordSequence, transpose, capo, songKey, repertoire],
+  );
 
   // Com capo na casa N, a cifra mostra o formato tocado (N semitons abaixo do som real)
   const lines = useMemo(
@@ -58,22 +96,11 @@ export default function GuitarView({
         const shaped = transposeChord(chord, transpose - capo);
         const index = chordIndex++;
         if (!simplify) return shaped;
-        return (
-          simplifyChordSmart(shaped, {
-            key: songKey ? transposeChord(songKey, transpose - capo) : undefined,
-            mode,
-            difficulty: simplifyDifficulty,
-            contextBefore: chordSequence[index - 1]
-              ? transposeChord(chordSequence[index - 1], transpose - capo)
-              : null,
-            contextAfter: chordSequence[index + 1]
-              ? transposeChord(chordSequence[index + 1], transpose - capo)
-              : null,
-          }).options[0]?.chord ?? shaped
-        );
+        if (!SMART_CHORDS_ENABLED) return simplifyChord(shaped);
+        return smartOptions[index]?.options.find((option) => !option.transpose)?.chord ?? shaped;
       });
     },
-    [text, transpose, capo, simplify, chordSequence, songKey, mode, simplifyDifficulty],
+    [text, transpose, capo, simplify, smartOptions],
   );
 
   const chords = useMemo(() => sheetChords(lines), [lines]);
@@ -133,25 +160,19 @@ export default function GuitarView({
           >
             Simplificar acordes
           </button>
-          {simplify && (
-            <div className="row" role="group" aria-label="Nível de simplificação">
-              <span className="muted">Estilo</span>
-              {[
-                ["facil", "Fácil"],
-                ["medio", "Equilibrado"],
-                ["fiel", "Fiel"],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  className="btn btn-sm"
-                  aria-pressed={simplifyDifficulty === value}
-                  onClick={() => onSimplifyDifficultyChange(value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          {simplify && SMART_CHORDS_ENABLED && hasSimplificationChoices && (
+            <label className="row field-label">
+              Simplificação
+              <select
+                className="input input-auto"
+                value={simplifyDifficulty}
+                onChange={(e) => onSimplifyDifficultyChange(e.target.value)}
+              >
+                <option value="facil">Mais fácil</option>
+                <option value="fiel">Mais fiel</option>
+                <option value="medio">Equilibrado</option>
+              </select>
+            </label>
           )}
 
           <label className="row field-label">
@@ -230,6 +251,24 @@ export default function GuitarView({
             <span className="muted">Em telas estreitas, a cifra fica em uma coluna para facilitar a leitura.</span>
           </div>
         </div>
+
+        {simplify &&
+          SMART_CHORDS_ENABLED &&
+          simplifyDifficulty === "facil" &&
+          ["bossa", "mpb"].includes(repertoire) &&
+          transposeSuggestion &&
+          transposeSuggestion.highBarres === 0 && (
+            <p className="hint">
+              Para facilitar ainda mais, experimente o tom {transposeSuggestion.target}.{" "}
+              <button
+                type="button"
+                className="link"
+                onClick={() => onTransposeChange(transpose + transposeSuggestion.shift)}
+              >
+                Transpor cifra
+              </button>
+            </p>
+          )}
 
         {capoIsBetter && (
           <p className="hint">

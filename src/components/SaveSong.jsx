@@ -9,7 +9,7 @@ export default function SaveSong({ meta, disabled, onSave }) {
   const [errorMessage, setErrorMessage] = useState("Não foi possível salvar.");
 
   useEffect(() => {
-    if (status !== "saved") return;
+    if (status !== "saved" && status !== "local-only") return;
     const timer = setTimeout(() => setStatus(null), 2000);
     return () => clearTimeout(timer);
   }, [status]);
@@ -17,9 +17,9 @@ export default function SaveSong({ meta, disabled, onSave }) {
   const save = async (fields) => {
     setStatus("saving");
     try {
-      await onSave(fields);
+      const result = await onSave(fields);
       setEditing(false);
-      setStatus("saved");
+      setStatus(result?.synced === false ? "local-only" : "saved");
     } catch (error) {
       setErrorMessage(error.message || "Não foi possível salvar.");
       setStatus("error");
@@ -83,6 +83,11 @@ export default function SaveSong({ meta, disabled, onSave }) {
         {meta.id ? "Salvar alterações" : "Salvar cifra"}
       </button>
       {status === "saved" && <span className="muted" role="status">Salvo ✓</span>}
+      {status === "local-only" && (
+        <span className="muted" role="status">
+          Salvo neste aparelho · conecte o Firebase em Minhas cifras
+        </span>
+      )}
       {status === "error" && <span className="error" role="alert">{errorMessage}</span>}
     </div>
   );
