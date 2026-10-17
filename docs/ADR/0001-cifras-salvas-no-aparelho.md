@@ -25,7 +25,7 @@ Manter **IndexedDB** como cópia local/offline e adicionar sincronização opcio
 
 ## Consequências
 
-- O app segue utilizável sem login e offline; com login e internet, sincroniza na abertura da biblioteca e ao salvar/excluir.
+- O app segue utilizável sem login e offline; com login e internet, sincroniza ao entrar e ao salvar/excluir. (Atualizado pelo [ADR 0003](0003-login-opcional-so-google.md): o login fica no topo do app e a sincronização roda em qualquer tela, não só na biblioteca.)
 - Firebase Spark oferece cotas gratuitas, sujeitas a limites e mudanças. O uso deve ser monitorado; o app não exige habilitar faturamento por conta própria.
 - Apagar dados do navegador remove a cópia local, mas não a versão sincronizada na conta. O backup JSON segue como proteção extra.
 - No iPhone, o Safari pode remover dados locais de sites sem uso; manter a sincronização ativa recupera a cópia ao entrar novamente.

@@ -133,7 +133,10 @@
 - Vercel: o Pedro criou as 4 variáveis `VITE_FIREBASE_*` como **Config**. A Vercel recusa o tipo privado/Sensitive com prefixo `VITE_`. Elas só valem a partir de um build novo: o Claude disparou o redeploy de produção (com autorização do Pedro) e confirmou que a configuração está no código publicado.
 - Login visível (branch `feat/account-entry`, ADR 0003): botão de conta no topo, boas-vindas na primeira abertura, hook `useAccount` no `App`, login por popup também no celular. O provedor E-mail/senha foi desativado no Firebase.
 - Verificado no navegador local: boas-vindas aparece; "Continuar sem conta" fecha e não volta; "Entrar" abre o Google sem erro. Lint, 266 testes e build ok. O login completo não foi testado, porque precisa da conta do Pedro.
-
 - Backup mantido (ADR 0003): sem conta é a única cópia fora do aparelho; com conta fica recolhido em "Exportar / importar cifras", porque a sincronização também propaga exclusões e o Firestore não guarda versões.
+- PR #33 mergeado em 2026-10-17 antes do push do commit do backup recolhido; o commit foi reaplicado na branch `feat/backup-collapse` (novo PR para `develop`).
+- Revisão da documentação: README (login opcional, backup, `useAccount`, tipo **Config** das variáveis na Vercel, linha duplicada de simplificação removida), nota no ADR 0001 apontando para o ADR 0003, pendências dos PRs #29/#30 (já mergeados) removidas.
 
-**Arquivos**: `src/hooks/useAccount.js`, `src/components/AccountMenu.jsx`, `src/components/Welcome.jsx`, `src/App.jsx`, `src/components/Library.jsx`, `src/utils/firebase.js`, `src/index.css`, `docs/ADR/0003-login-opcional-so-google.md`.
+**Arquivos**: `src/hooks/useAccount.js`, `src/components/AccountMenu.jsx`, `src/components/Welcome.jsx`, `src/App.jsx`, `src/components/Library.jsx`, `src/utils/firebase.js`, `src/index.css`, `docs/ADR/0003-login-opcional-so-google.md`, `README.md`, `docs/ADR/0001-cifras-salvas-no-aparelho.md`.
+
+**Próximos passos**: mergear o PR do backup recolhido; testar login e sincronização no computador e no celular.
