@@ -9,6 +9,9 @@ import ChordDiagram from "./components/ChordDiagram";
 import GuitarView from "./components/GuitarView";
 import Library from "./components/Library";
 import SaveSong from "./components/SaveSong";
+import AccountMenu from "./components/AccountMenu";
+import Welcome from "./components/Welcome";
+import { useAccount } from "./hooks/useAccount";
 import { useHashView } from "./hooks/useHashView";
 import { matchChord } from "./utils/chordMatcher";
 import { getChordNotes } from "./utils/chordUtils";
@@ -48,6 +51,7 @@ function App() {
   const [importMessage, setImportMessage] = useState(null);
   const [isImporting, setIsImporting] = useState(false);
   const [useInversion, setUseInversion] = useState(false);
+  const account = useAccount();
 
   // Cifra aberta (salva ou não) e ajustes de violão
   const [meta, setMeta] = useState(EMPTY_META);
@@ -253,8 +257,17 @@ function App() {
 
   return (
     <>
+      <Welcome account={account} />
       <header className="app-header">
-        <h1>ChordKeys Studio</h1>
+        <div className="header-row">
+          <h1>ChordKeys Studio</h1>
+          <AccountMenu account={account} />
+        </div>
+        {account.message?.error && view !== "cifras" && (
+          <p className="error" role="alert">
+            {account.message.text}
+          </p>
+        )}
         <nav className="tabs" aria-label="Telas">
           {VIEWS.map((v) => (
             <a
@@ -294,7 +307,7 @@ function App() {
 
       {view === "cifras" && (
         <main className="layout layout-single">
-          <Library onOpen={handleOpenSaved} />
+          <Library onOpen={handleOpenSaved} account={account} />
         </main>
       )}
 

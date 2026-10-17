@@ -72,17 +72,16 @@ export function observeAuth(callback, onError = () => {}) {
 export const signIn = async () => {
   const { auth, authSdk, googleProvider } = await getServices();
 
-  const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  if (mobile) {
-    await authSdk.signInWithRedirect(auth, googleProvider);
-    return;
-  }
-
+  // Popup também no celular: o redirecionamento passa pelo domínio firebaseapp.com
+  // e os navegadores atuais bloqueiam o armazenamento entre domínios, perdendo o login
   try {
     await authSdk.signInWithPopup(auth, googleProvider);
   } catch (error) {
     if (error.code === "auth/popup-blocked") {
       await authSdk.signInWithRedirect(auth, googleProvider);
+      return;
+    }
+    if (error.code === "auth/popup-closed-by-user" || error.code === "auth/cancelled-popup-request") {
       return;
     }
     throw error;

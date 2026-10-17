@@ -34,7 +34,7 @@ React 19 · Vite 8 · Tone.js · pdf.js (lazy-loaded) · Firebase Authentication
 ## Firebase setup
 
 1. Create a Firebase project and register a Web app.
-2. Enable **Google** in Authentication → Sign-in method.
+2. Enable **Google** in Authentication → Sign-in method (the app only uses Google; leave Email/password off).
 3. Create a Cloud Firestore database; in its **Rules** tab, paste `firestore.rules` and publish.
 4. Copy `.env.example` to `.env.local` and fill in the Web app's API key, Auth domain, project ID and app ID. Restart `npm run dev` after changing the file; Vite reads `VITE_*` values at startup/build time.
 5. Add `localhost` and the deployed app's exact hostname to Authentication → Settings → Authorized domains. Set the same `VITE_FIREBASE_*` values in the static host's build environment before rebuilding/redeploying; setting them only in the hosting dashboard without a new build does not update an existing bundle.
@@ -86,6 +86,7 @@ docs/
 
 - [ADR 0001](docs/ADR/0001-cifras-salvas-no-aparelho.md) — IndexedDB offline storage and Firebase cross-device sync.
 - [ADR 0002](docs/ADR/0002-importar-sem-servidor.md) — import without a server (paste, .txt, ChordPro, PDF).
+- [ADR 0003](docs/ADR/0003-login-opcional-so-google.md) — optional Google-only sign-in, visible in the header.
 
 ## Workflow
 

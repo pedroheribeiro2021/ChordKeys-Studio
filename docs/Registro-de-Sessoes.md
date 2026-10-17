@@ -128,3 +128,10 @@
 - Firestore: publicadas as regras de `firestore.rules` (cada usuário só lê e grava `users/{uid}/songs/*`).
 
 **Pendências**: a Vercel não tem as variáveis `VITE_FIREBASE_*` (ação do Pedro, ver `Pendencias.md`); testar login e sincronização.
+
+**Continuação (mesmo dia)**:
+- Vercel: o Pedro criou as 4 variáveis `VITE_FIREBASE_*` como **Config**. A Vercel recusa o tipo privado/Sensitive com prefixo `VITE_`. Elas só valem a partir de um build novo: o Claude disparou o redeploy de produção (com autorização do Pedro) e confirmou que a configuração está no código publicado.
+- Login visível (branch `feat/account-entry`, ADR 0003): botão de conta no topo, boas-vindas na primeira abertura, hook `useAccount` no `App`, login por popup também no celular. O provedor E-mail/senha foi desativado no Firebase.
+- Verificado no navegador local: boas-vindas aparece; "Continuar sem conta" fecha e não volta; "Entrar" abre o Google sem erro. Lint, 266 testes e build ok. O login completo não foi testado, porque precisa da conta do Pedro.
+
+**Arquivos**: `src/hooks/useAccount.js`, `src/components/AccountMenu.jsx`, `src/components/Welcome.jsx`, `src/App.jsx`, `src/components/Library.jsx`, `src/utils/firebase.js`, `src/index.css`, `docs/ADR/0003-login-opcional-so-google.md`.

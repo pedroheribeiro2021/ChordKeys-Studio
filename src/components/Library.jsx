@@ -5,15 +5,7 @@ import {
   importBackup,
   listSongs,
 } from "../utils/songStore";
-import {
-  firebaseConfigured,
-  missingFirebaseConfig,
-  observeAuth,
-  signIn,
-  signOutUser,
-  syncDeletedSongs,
-  syncSongs,
-} from "../utils/firebase";
+import { firebaseConfigured, missingFirebaseConfig, syncDeletedSongs } from "../utils/firebase";
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -32,14 +24,12 @@ const describeSettings = (song) =>
     .filter(Boolean)
     .join(" · ");
 
-export default function Library({ onOpen }) {
+export default function Library({ onOpen, account }) {
   const [songs, setSongs] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
   const [message, setMessage] = useState(null);
   const [persisted, setPersisted] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authReady, setAuthReady] = useState(false);
-  const [syncing, setSyncing] = useState(false);
+  const { user, ready: authReady, syncing, syncedAt } = account;
   const fileRef = useRef(null);
 
   const refresh = () =>
@@ -48,35 +38,13 @@ export default function Library({ onOpen }) {
       .catch(() => setMessage({ error: true, text: "Não foi possível ler as cifras salvas." }));
 
   useEffect(() => {
-    refresh();
     navigator.storage?.persisted?.().then(setPersisted);
-    return observeAuth(
-      async (nextUser) => {
-        setUser(nextUser);
-        setAuthReady(true);
-        if (!nextUser) return;
-
-        setSyncing(true);
-        try {
-          const result = await syncSongs(nextUser);
-          await refresh();
-          if (result.uploaded || result.downloaded) {
-            setMessage({
-              text: `Sincronizado: ${result.downloaded} baixada(s), ${result.uploaded} enviada(s).`,
-            });
-          }
-        } catch (error) {
-          setMessage({ error: true, text: `Falha na sincronização: ${error.message}` });
-        } finally {
-          setSyncing(false);
-        }
-      },
-      (error) => {
-        setAuthReady(true);
-        setMessage({ error: true, text: `Falha ao iniciar Firebase: ${error.message}` });
-      },
-    );
   }, []);
+
+  // Recarrega ao abrir e depois de cada sincronização da conta
+  useEffect(() => {
+    refresh();
+  }, [syncedAt]);
 
   const handleDelete = async (id) => {
     if (confirmingId !== id) {
@@ -96,40 +64,6 @@ export default function Library({ onOpen }) {
       });
       setConfirmingId(null);
       await refresh();
-    }
-  };
-
-  const handleSignIn = async () => {
-    setMessage(null);
-    try {
-      await signIn();
-    } catch (error) {
-      setMessage({ error: true, text: `Não foi possível entrar: ${error.message}` });
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOutUser();
-      setMessage({ text: "Sessão encerrada. As cifras locais foram mantidas." });
-    } catch (error) {
-      setMessage({ error: true, text: `Não foi possível sair: ${error.message}` });
-    }
-  };
-
-  const handleSyncNow = async () => {
-    if (!user) return;
-    setSyncing(true);
-    try {
-      const result = await syncSongs(user);
-      await refresh();
-      setMessage({
-        text: `Sincronização concluída: ${result.downloaded} baixada(s), ${result.uploaded} enviada(s).`,
-      });
-    } catch (error) {
-      setMessage({ error: true, text: `Falha na sincronização: ${error.message}` });
-    } finally {
-      setSyncing(false);
     }
   };
 
@@ -234,13 +168,13 @@ export default function Library({ onOpen }) {
                 ? "Sincronizando suas cifras…"
                 : `Conectado como ${user.email || user.displayName || "conta Google"}.`}
             </p>
-            <button type="button" className="btn" onClick={handleSignOut}>
+            <button type="button" className="btn" onClick={account.signOut}>
               Sair da conta
             </button>
             <button
               type="button"
               className="btn"
-              onClick={handleSyncNow}
+              onClick={account.syncNow}
               disabled={syncing}
             >
               Sincronizar agora
@@ -255,12 +189,17 @@ export default function Library({ onOpen }) {
             <button
               type="button"
               className="btn"
-              onClick={handleSignIn}
+              onClick={account.signIn}
               disabled={!authReady || syncing}
             >
               Entrar com Google
             </button>
           </>
+        )}
+        {account.message && (
+          <p className={account.message.error ? "error" : "muted"} role="status">
+            {account.message.text}
+          </p>
         )}
       </section>
 
