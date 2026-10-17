@@ -1,9 +1,11 @@
 # Pendências
 
-Atualizado em 2026-10-02. Itens concluídos saem daqui e vão para o `Registro-de-Sessoes.md`.
+Atualizado em 2026-10-16. Itens concluídos saem daqui e vão para o `Registro-de-Sessoes.md`.
 
 ## Ação do Pedro
 
+- [ ] Mergear o PR de login visível (`feat/account-entry` → `develop`) e testar login com Google e sincronização no computador e no celular, inclusive com o app instalado no iPhone (popup).
+- [ ] Se quiser login nos previews dos PRs: marcar *Preview* nas 4 variáveis `VITE_FIREBASE_*` na Vercel (hoje só Production).
 - [ ] **Mergear o #29** (violão, cifras salvas e import por arquivo → `develop`) e o **#30** (sustain do teclado). São independentes, sem conflito, em qualquer ordem. Depois do deploy, recarregar o app uma vez: o service worker do PWA pode servir a versão anterior na primeira abertura.
 - [ ] Decidir se a produção do `chord-keys-studio` deve seguir a `main` (hoje segue a `develop`).
 

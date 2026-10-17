@@ -115,3 +115,23 @@
 - 6 testes com Tone.js simulado; verificado no navegador (tecla acende/apaga, botão alterna).
 
 **Próximos passos**: mergear #29 e #30; testar no celular.
+
+## 2026-10-16 — Configuração do Firebase no console
+
+**Objetivo**: terminar a configuração do Firebase (projeto `chordskeys-studios`) começada com o Copilot.
+
+**Estado encontrado**: código (`src/utils/firebase.js`, `firestore.rules`) e `.env.local` prontos; o app ID do `.env.local` confere com o app web do console. No console, só o provedor E-mail/senha estava ativo e o Firestore tinha as regras padrão (bloqueia tudo).
+
+**Feito no console**:
+- Authentication: provedor **Google** ativado (nome público "ChordKeys Studio", e-mail de suporte da conta). E-mail/senha continua ativo, embora o app não use.
+- Domínios autorizados já tinham `localhost` e `chord-keys-studio.vercel.app`.
+- Firestore: publicadas as regras de `firestore.rules` (cada usuário só lê e grava `users/{uid}/songs/*`).
+
+**Pendências**: a Vercel não tem as variáveis `VITE_FIREBASE_*` (ação do Pedro, ver `Pendencias.md`); testar login e sincronização.
+
+**Continuação (mesmo dia)**:
+- Vercel: o Pedro criou as 4 variáveis `VITE_FIREBASE_*` como **Config**. A Vercel recusa o tipo privado/Sensitive com prefixo `VITE_`. Elas só valem a partir de um build novo: o Claude disparou o redeploy de produção (com autorização do Pedro) e confirmou que a configuração está no código publicado.
+- Login visível (branch `feat/account-entry`, ADR 0003): botão de conta no topo, boas-vindas na primeira abertura, hook `useAccount` no `App`, login por popup também no celular. O provedor E-mail/senha foi desativado no Firebase.
+- Verificado no navegador local: boas-vindas aparece; "Continuar sem conta" fecha e não volta; "Entrar" abre o Google sem erro. Lint, 266 testes e build ok. O login completo não foi testado, porque precisa da conta do Pedro.
+
+**Arquivos**: `src/hooks/useAccount.js`, `src/components/AccountMenu.jsx`, `src/components/Welcome.jsx`, `src/App.jsx`, `src/components/Library.jsx`, `src/utils/firebase.js`, `src/index.css`, `docs/ADR/0003-login-opcional-so-google.md`.
