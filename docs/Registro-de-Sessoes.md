@@ -115,3 +115,16 @@
 - 6 testes com Tone.js simulado; verificado no navegador (tecla acende/apaga, botão alterna).
 
 **Próximos passos**: mergear #29 e #30; testar no celular.
+
+## 2026-10-16 — Configuração do Firebase no console
+
+**Objetivo**: terminar a configuração do Firebase (projeto `chordskeys-studios`) começada com o Copilot.
+
+**Estado encontrado**: código (`src/utils/firebase.js`, `firestore.rules`) e `.env.local` prontos; o app ID do `.env.local` confere com o app web do console. No console, só o provedor E-mail/senha estava ativo e o Firestore tinha as regras padrão (bloqueia tudo).
+
+**Feito no console**:
+- Authentication: provedor **Google** ativado (nome público "ChordKeys Studio", e-mail de suporte da conta). E-mail/senha continua ativo, embora o app não use.
+- Domínios autorizados já tinham `localhost` e `chord-keys-studio.vercel.app`.
+- Firestore: publicadas as regras de `firestore.rules` (cada usuário só lê e grava `users/{uid}/songs/*`).
+
+**Pendências**: a Vercel não tem as variáveis `VITE_FIREBASE_*` (ação do Pedro, ver `Pendencias.md`); testar login e sincronização.
