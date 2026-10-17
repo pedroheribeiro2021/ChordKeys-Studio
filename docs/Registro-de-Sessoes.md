@@ -134,4 +134,6 @@
 - Login visível (branch `feat/account-entry`, ADR 0003): botão de conta no topo, boas-vindas na primeira abertura, hook `useAccount` no `App`, login por popup também no celular. O provedor E-mail/senha foi desativado no Firebase.
 - Verificado no navegador local: boas-vindas aparece; "Continuar sem conta" fecha e não volta; "Entrar" abre o Google sem erro. Lint, 266 testes e build ok. O login completo não foi testado, porque precisa da conta do Pedro.
 
+- Backup mantido (ADR 0003): sem conta é a única cópia fora do aparelho; com conta fica recolhido em "Exportar / importar cifras", porque a sincronização também propaga exclusões e o Firestore não guarda versões.
+
 **Arquivos**: `src/hooks/useAccount.js`, `src/components/AccountMenu.jsx`, `src/components/Welcome.jsx`, `src/App.jsx`, `src/components/Library.jsx`, `src/utils/firebase.js`, `src/index.css`, `docs/ADR/0003-login-opcional-so-google.md`.

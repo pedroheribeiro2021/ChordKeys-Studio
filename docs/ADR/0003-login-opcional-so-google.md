@@ -13,6 +13,7 @@ Com o Firebase configurado, o único ponto de login era o botão "Entrar com Goo
 - **Visível em todas as telas.** Há um botão de conta no topo: "Entrar" sem login; com login, o avatar abre um menu com "Sincronizar agora" e "Sair".
 - **Boas-vindas na primeira abertura**, com "Entrar com Google" e "Continuar sem conta". A escolha fica em `localStorage` (`chordkeys:welcome-seen`).
 - O estado da conta e a sincronização ficam no hook `useAccount`, no `App`. Assim o login sincroniza em qualquer tela, não só em "Minhas cifras".
+- **O backup em JSON continua.** Sem conta, é a única cópia fora do aparelho e aparece aberto. Com conta, fica recolhido em "Exportar / importar cifras": sincronização não é backup, porque leva exclusões feitas por engano para todos os aparelhos, e o Firestore no plano gratuito não guarda versões.
 - O login usa popup também no celular. O redirecionamento passa pelo domínio `firebaseapp.com`, e os navegadores atuais bloqueiam o armazenamento entre domínios, o que perdia o login na volta. O redirecionamento fica só como plano B, quando o popup é bloqueado.
 
 ## Alternativas consideradas
