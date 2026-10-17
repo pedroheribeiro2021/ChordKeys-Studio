@@ -107,6 +107,24 @@ export default function Library({ onOpen, account }) {
     }
   };
 
+  const backupActions = (
+    <div className="row">
+      <button type="button" className="btn" onClick={handleExport} disabled={!songs?.length}>
+        Exportar backup
+      </button>
+      <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
+        Importar backup
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/json,.json"
+        hidden
+        onChange={handleImport}
+      />
+    </div>
+  );
+
   return (
     <>
       <section className="card" aria-labelledby="library-title">
@@ -203,31 +221,34 @@ export default function Library({ onOpen, account }) {
         )}
       </section>
 
+      {/* Com conta, a sincronização cuida do dia a dia e o backup fica recolhido;
+          sem conta, ele é a única cópia fora do aparelho */}
       <section className="card" aria-labelledby="backup-title">
-        <h2 className="card-title" id="backup-title">
-          Backup
-        </h2>
-        <p className="muted backup-text">
-          As cifras ficam guardadas neste aparelho e, quando conectado, na sua conta Firebase.
-          Exporte um backup para ter uma cópia independente.
-          {persisted === false &&
-            " No iPhone, instale o app na tela inicial (Compartilhar → Adicionar à Tela de Início) para o Safari não apagar as cifras."}
-        </p>
-        <div className="row">
-          <button type="button" className="btn" onClick={handleExport} disabled={!songs?.length}>
-            Exportar backup
-          </button>
-          <button type="button" className="btn" onClick={() => fileRef.current?.click()}>
-            Importar backup
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            hidden
-            onChange={handleImport}
-          />
-        </div>
+        {user ? (
+          <details className="backup-details">
+            <summary className="card-title" id="backup-title">
+              Exportar / importar cifras
+            </summary>
+            <p className="muted backup-text">
+              Suas cifras já sincronizam com a sua conta. Exporte um arquivo para ter uma cópia
+              de segurança: a sincronização também leva exclusões para todos os aparelhos.
+            </p>
+            {backupActions}
+          </details>
+        ) : (
+          <>
+            <h2 className="card-title" id="backup-title">
+              Backup
+            </h2>
+            <p className="muted backup-text">
+              As cifras ficam guardadas só neste aparelho. Exporte um backup para ter uma cópia
+              independente, ou entre com sua conta Google para sincronizar.
+              {persisted === false &&
+                " No iPhone, instale o app na tela inicial (Compartilhar → Adicionar à Tela de Início) para o Safari não apagar as cifras."}
+            </p>
+            {backupActions}
+          </>
+        )}
         {message && (
           <p className={message.error ? "error" : "muted"} role="status">
             {message.text}

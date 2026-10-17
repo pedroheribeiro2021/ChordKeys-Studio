@@ -864,3 +864,28 @@ input[type="range"] {
 .backup-text {
   margin: 8px 0 12px;
 }
+
+.backup-details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--touch);
+  margin: -10px 0;
+}
+.backup-details > summary::-webkit-details-marker {
+  display: none;
+}
+.backup-details > summary::after {
+  content: "▾";
+  transition: transform 0.15s;
+}
+.backup-details[open] > summary::after {
+  transform: rotate(180deg);
+}
+.backup-details > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
