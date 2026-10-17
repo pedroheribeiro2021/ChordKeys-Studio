@@ -1,9 +1,11 @@
 # Pendências
 
-Atualizado em 2026-10-02. Itens concluídos saem daqui e vão para o `Registro-de-Sessoes.md`.
+Atualizado em 2026-10-16. Itens concluídos saem daqui e vão para o `Registro-de-Sessoes.md`.
 
 ## Ação do Pedro
 
+- [ ] **Variáveis do Firebase na Vercel** (projeto `chord-keys-studio`): o projeto não tem nenhuma variável. Em Settings → Environment Variables, colar o conteúdo do `.env.local` (as 4 `VITE_FIREBASE_*`) para Production e Preview, e fazer um redeploy. Sem isso o app publicado mostra "Configure o Firebase".
+- [ ] Testar login com Google e sincronização (local com `npm run dev` e, depois do redeploy, na Vercel).
 - [ ] **Mergear o #29** (violão, cifras salvas e import por arquivo → `develop`) e o **#30** (sustain do teclado). São independentes, sem conflito, em qualquer ordem. Depois do deploy, recarregar o app uma vez: o service worker do PWA pode servir a versão anterior na primeira abertura.
 - [ ] Decidir se a produção do `chord-keys-studio` deve seguir a `main` (hoje segue a `develop`).
 
