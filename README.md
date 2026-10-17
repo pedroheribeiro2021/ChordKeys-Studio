@@ -16,7 +16,6 @@ The interface is in Brazilian Portuguese and understands the chord notation used
 **Guitar**
 - Chord sheet with chords highlighted over the lyrics, transposed without breaking the alignment.
 - Chord diagrams (open shapes and E/A barre shapes for any root).
-- **Smart chord simplification**: keeps harmonic color by default, offers ranked alternatives for easy/balanced/faithful playing, and considers chord context and repertoire.
 - **Capo suggestion**: finds the fret that leaves the fewest barre chords.
 - **Auto-scroll** with speed control; keeps the screen awake (Wake Lock).
 - **Smart chord simplification** ranks playable alternatives using chord context, selected song key/mode and a faithful/balanced/easy style.
@@ -25,7 +24,8 @@ The interface is in Brazilian Portuguese and understands the chord notation used
 **Import and library**
 - Paste a chord sheet (headers, tablature and tabs are cleaned up), or open `.txt`, **ChordPro** or **PDF** files.
 - PDFs are rebuilt from the text positions on the page, so each chord lands back on the right syllable.
-- Saved songs stay in IndexedDB for offline use and sync across devices through Firebase Authentication and Cloud Firestore; JSON backup export/import remains available.
+- Saved songs stay in IndexedDB for offline use. Signing in is optional: an account button in the header (and a welcome screen on first open) signs in with Google and syncs the library across devices through Cloud Firestore.
+- JSON backup export/import: prominent without an account (the only copy off the device), collapsed when signed in (sync also propagates deletions, so the file is the undo).
 
 ## Stack
 
@@ -37,7 +37,7 @@ React 19 · Vite 8 · Tone.js · pdf.js (lazy-loaded) · Firebase Authentication
 2. Enable **Google** in Authentication → Sign-in method (the app only uses Google; leave Email/password off).
 3. Create a Cloud Firestore database; in its **Rules** tab, paste `firestore.rules` and publish.
 4. Copy `.env.example` to `.env.local` and fill in the Web app's API key, Auth domain, project ID and app ID. Restart `npm run dev` after changing the file; Vite reads `VITE_*` values at startup/build time.
-5. Add `localhost` and the deployed app's exact hostname to Authentication → Settings → Authorized domains. Set the same `VITE_FIREBASE_*` values in the static host's build environment before rebuilding/redeploying; setting them only in the hosting dashboard without a new build does not update an existing bundle.
+5. Add `localhost` and the deployed app's exact hostname to Authentication → Settings → Authorized domains. Set the same `VITE_FIREBASE_*` values in the static host's build environment before rebuilding/redeploying; setting them only in the hosting dashboard without a new build does not update an existing bundle. On Vercel, create them with the **Config** type: Vercel refuses `VITE_*` variables marked Sensitive because Vite exposes them to the browser (Firebase web config is public by design).
 
 Firebase web config values identify the project; Firestore Security Rules enforce per-account access. The rules only allow each signed-in user to read and write `users/{uid}/songs/*` for their own UID. The Spark plan has daily read/write limits; monitor usage in the Firebase console. IndexedDB stays as the offline copy and pending local deletions are synchronized as tombstones.
 
@@ -61,8 +61,8 @@ The service worker only runs in the production build (`npm run build && npm run 
 
 ```
 src/
-  components/     UI (Piano, GuitarView, Library, ChordInput…)
-  hooks/          useAutoScroll, useHashView
+  components/     UI (Piano, GuitarView, Library, AccountMenu, Welcome…)
+  hooks/          useAccount (sign-in + sync), useAutoScroll, useHashView
   utils/
     chordUtils.js   chord parsing and notes (flats, extensions, slash chords)
     transpose.js    transposition keeping the chord suffix

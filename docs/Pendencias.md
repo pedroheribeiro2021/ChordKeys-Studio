@@ -4,9 +4,9 @@ Atualizado em 2026-10-16. Itens concluídos saem daqui e vão para o `Registro-d
 
 ## Ação do Pedro
 
-- [ ] Mergear o PR de login visível (`feat/account-entry` → `develop`) e testar login com Google e sincronização no computador e no celular, inclusive com o app instalado no iPhone (popup).
+- [ ] Mergear o PR do backup recolhido (`feat/backup-collapse` → `develop`); o commit ficou fora do #33, que foi mergeado antes do push.
+- [ ] Testar login com Google e sincronização no computador e no celular, inclusive com o app instalado no iPhone (popup), e conferir a seção "Exportar / importar cifras" recolhida com login.
 - [ ] Se quiser login nos previews dos PRs: marcar *Preview* nas 4 variáveis `VITE_FIREBASE_*` na Vercel (hoje só Production).
-- [ ] **Mergear o #29** (violão, cifras salvas e import por arquivo → `develop`) e o **#30** (sustain do teclado). São independentes, sem conflito, em qualquer ordem. Depois do deploy, recarregar o app uma vez: o service worker do PWA pode servir a versão anterior na primeira abertura.
 - [ ] Decidir se a produção do `chord-keys-studio` deve seguir a `main` (hoje segue a `develop`).
 
 ## Testar no celular (não deu para verificar em navegador automatizado)
